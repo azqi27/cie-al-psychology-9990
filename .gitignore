@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+
+# Local secrets (never commit)
+secrets.env
+*.token
+.env
+
+# Build / deploy output (frontend added later)
+dist/
+.build/
+.node_modules/
+
+# Temp
+*.log
+.cache/

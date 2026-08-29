@@ -1,0 +1,296 @@
+# =====================================================================
+# 9990 公益题库 — 分类体系 (taxonomy)
+# 范围：2024–2026 考纲 · Paper 1 + Paper 2（首版切片）
+# 本文件是 P1 阶段必须一次定稿的"单一事实来源"(single source of truth)。
+# 题目记录的 topics[] / type_facet 字段均引用本文件的 id。
+# =====================================================================
+
+meta:
+  syllabus_version: "2024-2026"
+  papers_in_scope: [P1, P2]
+  ui_language: zh          # 界面中文
+  question_language: en    # 题目英文（与考试一致）
+  site_name: cie-al-psychology-9990
+  domain: ""               # 待定，先用 *.pages.dev
+  display_mode: full       # Q1=A 全文模式；如需切换为索引模式改此处
+  mark_scheme_shown: false # Q3=不展示 mark scheme，仅给原卷+题号溯源
+
+# ---------------------------------------------------------------------
+# 维度一：知识点 (Syllabus Topic)
+# 用于筛选的"第一维"。id 为稳定字符串，前端/数据均引用它。
+# group: p1 / p2 标明所属卷；kind: approach/study/debate/method/concept
+# ---------------------------------------------------------------------
+topics:
+
+  # ===== Paper 1：Approaches, Issues and Debates =====
+  # —— 四大视角 (Approaches) ——
+  - id: approach.biological
+    zh: 生物视角
+    en: Biological approach
+    group: p1
+    kind: approach
+  - id: approach.cognitive
+    zh: 认知视角
+    en: Cognitive approach
+    group: p1
+    kind: approach
+  - id: approach.learning
+    zh: 学习视角
+    en: Learning approach
+    group: p1
+    kind: approach
+  - id: approach.social
+    zh: 社会视角
+    en: Social approach
+    group: p1
+    kind: approach
+
+  # —— 12 篇核心研究 (Core Studies, 按视角分组) ——
+  - id: study.dement_kleitman
+    zh: Dement & Kleitman（睡眠与梦）
+    en: Dement & Kleitman (sleep and dreams)
+    group: p1
+    kind: study
+    approach: biological
+  - id: study.hassett
+    zh: Hassett 等（猴子玩具偏好）
+    en: Hassett et al. (monkey toy preferences)
+    group: p1
+    kind: study
+    approach: biological
+  - id: study.holzel
+    zh: Hölzel 等（正念与脑扫描）
+    en: Hölzel et al. (mindfulness and brain scans)
+    group: p1
+    kind: study
+    approach: biological
+  - id: study.andrade
+    zh: Andrade（涂鸦）
+    en: Andrade (doodling)
+    group: p1
+    kind: study
+    approach: cognitive
+  - id: study.baron_cohen
+    zh: Baron-Cohen 等（ eyes test 读心）
+    en: Baron-Cohen et al. (eyes test)
+    group: p1
+    kind: study
+    approach: cognitive
+  - id: study.pozzulo
+    zh: Pozzulo 等（列队辨认）
+    en: Pozzulo et al. (line-ups)
+    group: p1
+    kind: study
+    approach: cognitive
+  - id: study.bandura
+    zh: Bandura 等（攻击行为）
+    en: Bandura et al. (aggression)
+    group: p1
+    kind: study
+    approach: learning
+  - id: study.fagen
+    zh: Fagen 等（大象学习）
+    en: Fagen et al. (elephant learning)
+    group: p1
+    kind: study
+    approach: learning
+  - id: study.saavedra_silverman
+    zh: Saavedra & Silverman（纽扣恐惧症）
+    en: Saavedra & Silverman (button phobia)
+    group: p1
+    kind: study
+    approach: learning
+  - id: study.milgram
+    zh: Milgram（服从）
+    en: Milgram (obedience)
+    group: p1
+    kind: study
+    approach: social
+  - id: study.perry
+    zh: Perry 等（个人空间）
+    en: Perry et al. (personal space)
+    group: p1
+    kind: study
+    approach: social
+  - id: study.piliavin
+    zh: Piliavin 等（地铁助人）
+    en: Piliavin et al. (subway Samaritan)
+    group: p1
+    kind: study
+    approach: social
+
+  # —— Issues & Debates（横切标签，可与任意节点叠加）——
+  - id: debate.application_everyday
+    zh: 应用于日常生活
+    en: Application to everyday life
+    group: p1
+    kind: debate
+  - id: debate.individual_situational
+    zh: 个人 vs 情境
+    en: Individual vs situational
+    group: p1
+    kind: debate
+  - id: debate.nature_nurture
+    zh: 先天 vs 后天
+    en: Nature vs nurture
+    group: p1
+    kind: debate
+  - id: debate.use_of_children
+    zh: 使用儿童
+    en: Use of children
+    group: p1
+    kind: debate
+  - id: debate.use_of_animals
+    zh: 使用动物
+    en: Use of animals
+    group: p1
+    kind: debate
+  - id: debate.cultural_differences
+    zh: 文化差异
+    en: Cultural differences
+    group: p1
+    kind: debate
+  - id: debate.reductionism_holism
+    zh: 还原论 vs 整体论
+    en: Reductionism vs holism
+    group: p1
+    kind: debate
+  - id: debate.determinism_freewill
+    zh: 决定论 vs 自由意志
+    en: Determinism vs free will
+    group: p1
+    kind: debate
+  - id: debate.idiographic_nomothetic
+    zh: idiographic vs nomothetic
+    en: Idiographic vs nomothetic
+    group: p1
+    kind: debate
+
+  # ===== Paper 2：Research Methods =====
+  # —— 研究方法类型 (Research methods) ——
+  - id: method.experiment
+    zh: 实验（实验室/现场）
+    en: Experiments (lab/field)
+    group: p2
+    kind: method
+  - id: method.self_report
+    zh: 自我报告（问卷/访谈）
+    en: Self-reports (questionnaire/interview)
+    group: p2
+    kind: method
+  - id: method.case_study
+    zh: 个案研究
+    en: Case studies
+    group: p2
+    kind: method
+  - id: method.observation
+    zh: 观察法
+    en: Observations
+    group: p2
+    kind: method
+  - id: method.correlation
+    zh: 相关法
+    en: Correlations
+    group: p2
+    kind: method
+  - id: method.longitudinal
+    zh: 纵向研究
+    en: Longitudinal studies
+    group: p2
+    kind: method
+
+  # —— 方法论概念 (Methodological concepts) ——
+  - id: concept.aims_hypotheses
+    zh: 研究目的与假设
+    en: Aims & hypotheses
+    group: p2
+    kind: concept
+  - id: concept.variables
+    zh: 变量
+    en: Variables
+    group: p2
+    kind: concept
+  - id: concept.controls
+    zh: 控制
+    en: Controls
+    group: p2
+    kind: concept
+  - id: concept.types_of_data
+    zh: 数据类型
+    en: Types of data
+    group: p2
+    kind: concept
+  - id: concept.sampling
+    zh: 抽样
+    en: Sampling
+    group: p2
+    kind: concept
+  - id: concept.ethics
+    zh: 伦理
+    en: Ethics
+    group: p2
+    kind: concept
+  - id: concept.reliability
+    zh: 信度
+    en: Reliability
+    group: p2
+    kind: concept
+  - id: concept.validity
+    zh: 效度
+    en: Validity
+    group: p2
+    kind: concept
+  - id: concept.data_analysis
+    zh: 数据分析（描述/图表）
+    en: Data analysis (descriptive/graphs)
+    group: p2
+    kind: concept
+  - id: concept.evaluating
+    zh: 研究评价
+    en: Evaluating research
+    group: p2
+    kind: concept
+
+# ---------------------------------------------------------------------
+# 维度二：题型 (Question Type / type_facet)
+# 注意：这是用户定义的"主题型"维度，与 command word 是不同维度。
+#   P1 → 按"研究切面 / 实验流程阶段"分类（用户 Q4 明确要求）
+#   P2 → 暂留空（null）；待后续确定
+# ---------------------------------------------------------------------
+type_facets:
+
+  p1:                         # Paper 1 题型 = 研究切面（针对核心研究题）
+    label_zh: "研究切面 (研究流程阶段)"
+    values:
+      - { id: aim,                       zh: "研究目的 (Aim)" }
+      - { id: hypothesis,                zh: "假设 (Hypothesis)" }
+      - { id: sample,                    zh: "被试/样本 (Sample)" }
+      - { id: procedure,                 zh: "程序/方法 (Procedure)" }
+      - { id: findings,                  zh: "发现/结果 (Findings)" }
+      - { id: conclusion,                zh: "结论 (Conclusion)" }
+      - { id: application_everyday,      zh: "应用于日常生活 (Application)" }
+      - { id: ethical_issues,            zh: "伦理问题 (Ethics)" }
+      - { id: evaluation,                zh: "评价/批评 (Evaluation)" }
+      - { id: other,                     zh: "其他/不适用" }
+
+  p2: null                    # Q4：P2 题型分类待定，留空
+
+# ---------------------------------------------------------------------
+# 通用 facet（始终可用，不属"主题型"但极具筛选价值）
+# ---------------------------------------------------------------------
+universal_facets:
+  marks: [1, 2, 3, 4, 6, 8, 10]      # 分值（P1/P2 单题 1–10）
+  command_words:                     # 官方命令词（P1/P2 通用，作为次级筛选项）
+    - { id: define,    zh: "下定义 (Define/State/Identify/Give)" }
+    - { id: outline,   zh: "概述 (Outline)" }
+    - { id: describe,  zh: "描述 (Describe)" }
+    - { id: explain,   zh: "解释 (Explain)" }
+    - { id: suggest,   zh: "建议/应用 (Suggest)" }
+    - { id: compare,   zh: "比较 (Compare)" }
+    - { id: analyse,   zh: "分析 (Analyse)" }
+    - { id: evaluate,  zh: "评价 (Evaluate)" }
+    - { id: plan,      zh: "计划设计 (Plan)" }
+  paper: [P1, P2]
+  syllabus_version: ["2024-2026"]
+  year: [2024, 2025, 2026]
+  session: [m, s, w]        # m=2/3月, s=5/6月, w=10/11月
