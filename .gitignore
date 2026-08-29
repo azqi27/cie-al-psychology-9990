@@ -18,7 +18,8 @@ secrets.env
 # Build / deploy output (frontend added later)
 dist/
 .build/
-.node_modules/
+node_modules/
+.astro/
 
 # Temp
 *.log

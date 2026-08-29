@@ -1,0 +1,245 @@
+---
+import '../styles/global.css';
+import { questions, effectiveType } from '../lib/loadQuestions';
+import {
+  TOPIC_LABELS,
+  TYPE_LABELS,
+  CMD_LABELS,
+  TOPIC_GROUPS,
+  SESSION_LABELS,
+} from '../lib/taxonomy';
+
+const years = [...new Set(questions.map((q) => q.series.year))].sort((a, b) => a - b);
+const sessions = [...new Set(questions.map((q) => q.series.session))].sort();
+const cmds = [...new Set(questions.flatMap((q) => q.command_words))].filter(Boolean).sort();
+const marksList = [
+  ...new Set(questions.map((q) => q.marks).filter((m): m is number => m != null)),
+].sort((a, b) => a - b);
+
+// 数据中出现的、但不在已知分组里的知识点（防御性展示）
+const knownIds = new Set(TOPIC_GROUPS.flatMap((g) => g.ids));
+const extraTopics = [...new Set(questions.flatMap((q) => q.topics))].filter(
+  (t) => !knownIds.has(t)
+);
+
+const qLabel = (q: (typeof questions)[number]) =>
+  `Q${q.q_no}${q.part ? `(${q.part})` : ''}${q.subpart ? `(${q.subpart})` : ''}`;
+const searchBlob = (q: (typeof questions)[number]) =>
+  `${q.stem_text} ${q.text}`.toLowerCase();
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CIE A-Level 心理学 9990 题库 · Paper 1</title>
+    <meta
+      name="description"
+      content="CIE A-Level 心理学 9990（2024–2026 考纲 Paper 1）公益题库：按知识点与研究切面筛选历年真题。"
+    />
+  </head>
+  <body class="bg-gray-50 text-gray-800">
+    <!-- 顶部 -->
+    <header class="bg-indigo-700 text-white">
+      <div class="max-w-6xl mx-auto px-4 py-6">
+        <h1 class="text-2xl font-bold">CIE A-Level 心理学 9990 · 题库</h1>
+        <p class="mt-1 text-indigo-100 text-sm">
+          慈善 / 非营利 · 免费开放 · 仅收录 <strong>2024–2026 考纲 Paper 1</strong>
+          （Approaches / Issues &amp; Debates）· 共 {questions.length} 道真题
+        </p>
+        <p class="mt-1 text-indigo-200 text-xs">
+          界面中文 · 题目英文 · 不展示 mark scheme，仅标注原卷与题号便于溯源
+        </p>
+      </div>
+    </header>
+
+    <!-- 筛选栏（粘性） -->
+    <div class="sticky top-0 z-10 bg-white shadow border-b border-gray-200">
+      <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap gap-3 items-end">
+        <label class="flex flex-col text-xs font-medium text-gray-600">
+          知识点
+          <select id="f-topic" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800 min-w-[10rem]">
+            <option value="">全部知识点</option>
+            {TOPIC_GROUPS.map((g) => (
+              <optgroup label={g.label}>
+                {g.ids.map((id) => (
+                  <option value={id}>{TOPIC_LABELS[id] ?? id}</option>
+                ))}
+              </optgroup>
+            ))}
+            {extraTopics.length > 0 && (
+              <optgroup label="其他">
+                {extraTopics.map((id) => (
+                  <option value={id}>{TOPIC_LABELS[id] ?? id}</option>
+                ))}
+              </optgroup>
+            )}
+          </select>
+        </label>
+
+        <label class="flex flex-col text-xs font-medium text-gray-600">
+          研究切面
+          <select id="f-type" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800 min-w-[10rem]">
+            <option value="">全部研究切面</option>
+            {Object.entries(TYPE_LABELS).map(([id, label]) => (
+              <option value={id}>{label}</option>
+            ))}
+          </select>
+        </label>
+
+        <label class="flex flex-col text-xs font-medium text-gray-600">
+          年份
+          <select id="f-year" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800">
+            <option value="">全部年份</option>
+            {years.map((y) => <option value={y}>{y}</option>)}
+          </select>
+        </label>
+
+        <label class="flex flex-col text-xs font-medium text-gray-600">
+          考期
+          <select id="f-session" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800">
+            <option value="">全部考期</option>
+            {sessions.map((s) => <option value={s}>{SESSION_LABELS[s] ?? s}</option>)}
+          </select>
+        </label>
+
+        <label class="flex flex-col text-xs font-medium text-gray-600">
+          命令词
+          <select id="f-cmd" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800">
+            <option value="">全部命令词</option>
+            {cmds.map((c) => <option value={c}>{CMD_LABELS[c] ?? c}</option>)}
+          </select>
+        </label>
+
+        <label class="flex flex-col text-xs font-medium text-gray-600">
+          分值
+          <select id="f-marks" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800">
+            <option value="">全部分值</option>
+            {marksList.map((m) => <option value={m}>[{m}]</option>)}
+          </select>
+        </label>
+
+        <label class="flex flex-col text-xs font-medium text-gray-600 grow min-w-[12rem]">
+          搜索（题面关键词）
+          <input
+            id="f-search"
+            type="search"
+            placeholder="如：sample, aim, Baron-Cohen…"
+            class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800 w-full"
+          />
+        </label>
+
+        <button
+          id="btn-reset"
+          class="text-sm px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
+        >
+          重置
+        </button>
+
+        <div class="text-xs text-gray-500 self-center">
+          命中 <span id="result-count" class="font-semibold text-indigo-700">{questions.length}</span> 题
+        </div>
+      </div>
+    </div>
+
+    <!-- 卡片列表 -->
+    <main class="max-w-6xl mx-auto px-4 py-6">
+      <div id="qlist" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {questions.map((q) => (
+          <article
+            class="card bg-white rounded-lg shadow-sm border border-gray-100 p-4 flex flex-col gap-2"
+            data-topics={q.topics.join(' ')}
+            data-type={effectiveType(q)}
+            data-year={String(q.series.year)}
+            data-session={q.series.session}
+            data-cmd={q.command_words.join(' ')}
+            data-marks={q.marks != null ? String(q.marks) : ''}
+            data-search={searchBlob(q)}
+          >
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="badge bg-indigo-50 text-indigo-700">{q.paper.code} · {qLabel(q)}</span>
+              {q.marks != null && <span class="badge bg-amber-50 text-amber-700">[{q.marks}]</span>}
+              {q.has_figure && <span class="badge bg-rose-50 text-rose-700">含图</span>}
+            </div>
+
+            <p class="qtext text-sm text-gray-900">{q.text}</p>
+
+            <div class="flex flex-wrap gap-1.5 mt-auto pt-2">
+              {q.topics.map((t) => (
+                <span class="badge bg-emerald-50 text-emerald-700">{TOPIC_LABELS[t] ?? t}</span>
+              ))}
+              <span class="badge bg-sky-50 text-sky-700">{TYPE_LABELS[effectiveType(q)] ?? effectiveType(q)}</span>
+              {q.command_words.map((c) => (
+                <span class="badge bg-violet-50 text-violet-700">{CMD_LABELS[c] ?? c}</span>
+              ))}
+            </div>
+
+            <div class="text-[11px] text-gray-400">
+              来源：{q.source.file} · {q.series.year} {SESSION_LABELS[q.series.session] ?? q.series.session}
+            </div>
+          </article>
+        ))}
+      </div>
+
+      <p id="empty-hint" class="hidden text-center text-gray-400 text-sm py-10">
+        没有符合条件的题目，试试调整筛选条件。
+      </p>
+    </main>
+
+    <footer class="max-w-6xl mx-auto px-4 py-8 text-center text-xs text-gray-400">
+      数据来源于历年真题 PDF，按 2024–2026 考纲整理 · 慈善 / 教育用途，免费开放
+    </footer>
+
+    <script>
+      const $ = (id: string) => document.getElementById(id);
+      const sel = {
+        topic: $('f-topic') as HTMLSelectElement,
+        type: $('f-type') as HTMLSelectElement,
+        year: $('f-year') as HTMLSelectElement,
+        session: $('f-session') as HTMLSelectElement,
+        cmd: $('f-cmd') as HTMLSelectElement,
+        marks: $('f-marks') as HTMLSelectElement,
+        search: $('f-search') as HTMLInputElement,
+      };
+      const cards = Array.from(document.querySelectorAll('#qlist .card')) as HTMLElement[];
+      const countEl = $('result-count') as HTMLElement;
+      const emptyHint = $('empty-hint') as HTMLElement;
+
+      function apply() {
+        const topic = sel.topic.value;
+        const type = sel.type.value;
+        const year = sel.year.value;
+        const session = sel.session.value;
+        const cmd = sel.cmd.value;
+        const marks = sel.marks.value;
+        const q = sel.search.value.trim().toLowerCase();
+
+        let n = 0;
+        for (const c of cards) {
+          const topics = (c.dataset.topics || '').split(' ');
+          const cmds = (c.dataset.cmd || '').split(' ');
+          const okTopic = !topic || topics.includes(topic);
+          const okType = !type || (c.dataset.type || '') === type;
+          const okYear = !year || c.dataset.year === year;
+          const okSession = !session || c.dataset.session === session;
+          const okCmd = !cmd || cmds.includes(cmd);
+          const okMarks = !marks || c.dataset.marks === marks;
+          const okQ = !q || (c.dataset.search || '').includes(q);
+          const show = okTopic && okType && okYear && okSession && okCmd && okMarks && okQ;
+          c.classList.toggle('is-hidden', !show);
+          if (show) n++;
+        }
+        countEl.textContent = String(n);
+        emptyHint.classList.toggle('hidden', n !== 0);
+      }
+
+      Object.values(sel).forEach((el) => el && el.addEventListener('input', apply));
+      $('btn-reset')?.addEventListener('click', () => {
+        Object.values(sel).forEach((el) => el && (el.value = ''));
+        apply();
+      });
+      apply();
+    </script>
+  </body>
+</html>

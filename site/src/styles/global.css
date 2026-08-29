@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+:root { color-scheme: light; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+}
+
+/* 原题英文需保留换行（full-text 模式） */
+.qtext {
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.55;
+}
+
+/* 筛选后的卡片隐藏 */
+.card.is-hidden { display: none; }
+
+/* 徽标 / 标签基础样式（配合 Tailwind 工具类使用） */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.1rem 0.5rem;
+  border-radius: 9999px;
+  line-height: 1.2;
+}
