@@ -1,0 +1,209 @@
+<!DOCTYPE html><html lang="zh-CN"> <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>CIE A-Level Psychology 9990</title><meta name="description" content="CIE A-Level Psychology 9990 question bank — past paper questions filtered by the 12 core studies (2024–2026 syllabus, Paper 1)."><link rel="stylesheet" href="/cie-al-psychology-9990/_astro/admin.C-BeF0pO.css"></head> <body class="bg-gray-50 text-gray-800"> <!-- 顶部：仅大标题 + 副标题 --> <header class="site-header"> <div class="max-w-6xl mx-auto px-4 py-4"> <h1>CIE A-Level Psychology 9990</h1> <p class="site-sub">by Angel Zhang</p> </div> </header> <!-- 筛选栏（粘性） --> <div class="sticky top-0 z-10 bg-white shadow border-b border-gray-200"> <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap gap-3 items-end"> <label class="flex flex-col text-xs font-medium text-gray-600">
+Paper
+<select id="f-paper" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800"> <option value="">All papers</option> <option value="1">Paper 1</option><option value="2">Paper 2</option><option value="3">Paper 3</option><option value="4">Paper 4</option> </select> </label> <label class="flex flex-col text-xs font-medium text-gray-600">
+Study
+<select id="f-topic" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800 min-w-[14rem]"> <option value="">All studies</option> </select> </label> <label class="flex flex-col text-xs font-medium text-gray-600">
+Research facet
+<select id="f-type" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800 min-w-[10rem]"> <option value="">All facets</option> <option value="background">Background</option><option value="psychology_investigated">Psychology Investigated</option><option value="aim">Aim</option><option value="hypothesis">Hypothesis</option><option value="research_method_design">Method + Design</option><option value="sample">Sample</option><option value="procedure">Procedure</option><option value="result">Result</option><option value="conclusion">Conclusion</option><option value="strengths_weaknesses">Strengths &amp; Weaknesses</option><option value="application_everyday">Application</option><option value="issues_debates">Issues &amp; Debates</option><option value="approach">Approach</option><option value="other">Other</option> </select> </label> <label class="flex flex-col text-xs font-medium text-gray-600">
+Year
+<select id="f-year" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800"> <option value="">All years</option> </select> </label> <label class="flex flex-col text-xs font-medium text-gray-600">
+Session
+<select id="f-session" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800"> <option value="">All sessions</option> </select> </label> <label class="flex flex-col text-xs font-medium text-gray-600">
+Command word
+<select id="f-cmd" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800"> <option value="">All command words</option> </select> </label> <label class="flex flex-col text-xs font-medium text-gray-600">
+Marks
+<select id="f-marks" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800"> <option value="">All marks</option> </select> </label> <label class="flex flex-col text-xs font-medium text-gray-600 grow min-w-[12rem]">
+Search
+<input id="f-search" type="search" placeholder="e.g. sample, aim, Baron-Cohen…" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800 w-full"> </label> <button id="btn-reset" class="text-sm px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300">
+重置
+</button> <div class="text-xs text-gray-500 self-center">
+匹配到 <span id="result-count" class="font-semibold text-theme-dark">0</span> 题
+</div> </div> </div> <!-- 卡片列表 --> <main class="max-w-6xl mx-auto px-4 py-6"> <div id="loading" class="text-center text-gray-400 text-sm py-10">正在加载题目…</div> <div id="qlist" class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden"></div> <p id="empty-hint" class="hidden text-center text-gray-400 text-sm py-10">
+没有符合条件的题目，试试调整筛选条件。
+</p> </main> <footer class="max-w-6xl mx-auto px-4 py-8 text-center text-xs text-gray-400">
+题目整理自历年真题 PDF · 按 2024–2026 考纲
+</footer> <script>(function(){const TOPICS_BY_PAPER = {"1":[{"label":"Biological","ids":["study.dement_kleitman","study.hassett","study.holzel"]},{"label":"Cognitive","ids":["study.andrade","study.baron_cohen","study.pozzulo"]},{"label":"Learning","ids":["study.bandura","study.fagen","study.saavedra_silverman"]},{"label":"Social","ids":["study.milgram","study.perry","study.piliavin"]},{"label":"Approaches (视角)","ids":["approach.biological","approach.cognitive","approach.learning","approach.social"]}],"2":[{"label":"Methods","ids":["method.experiment","method.self_report","method.case_study","method.observation","method.correlation","method.longitudinal"]},{"label":"Concepts","ids":["concept.aims_hypotheses","concept.variables","concept.controls","concept.types_of_data","concept.sampling","concept.ethics","concept.reliability","concept.validity","concept.data_analysis","concept.evaluating"]}],"3":[],"4":[]};
+const TOPIC_LABELS = {"study.dement_kleitman":"Dement & Kleitman (sleep and dreams)","study.hassett":"Hassett et al. (monkey toy preferences)","study.holzel":"Hölzel et al. (mindfulness and brain scans)","study.andrade":"Andrade (doodling)","study.baron_cohen":"Baron-Cohen et al. (eyes test)","study.pozzulo":"Pozzulo et al. (line-ups)","study.bandura":"Bandura et al. (aggression)","study.fagen":"Fagen et al. (elephant learning)","study.saavedra_silverman":"Saavedra & Silverman (button phobia)","study.milgram":"Milgram (obedience)","study.perry":"Perry et al. (personal space)","study.piliavin":"Piliavin et al. (subway Samaritan)","approach.biological":"Biological approach","approach.cognitive":"Cognitive approach","approach.learning":"Learning approach","approach.social":"Social approach","method.experiment":"Experiments","method.self_report":"Self-reports","method.case_study":"Case studies","method.observation":"Observations","method.correlation":"Correlations","method.longitudinal":"Longitudinal","concept.aims_hypotheses":"Aims & hypotheses","concept.variables":"Variables","concept.controls":"Controls","concept.types_of_data":"Types of data","concept.sampling":"Sampling","concept.ethics":"Ethics","concept.reliability":"Reliability","concept.validity":"Validity","concept.data_analysis":"Data analysis","concept.evaluating":"Evaluating research"};
+const TYPE_LABELS = {"background":"Background","psychology_investigated":"Psychology Investigated","aim":"Aim","hypothesis":"Hypothesis","research_method_design":"Method + Design","sample":"Sample","procedure":"Procedure","result":"Result","conclusion":"Conclusion","strengths_weaknesses":"Strengths & Weaknesses","application_everyday":"Application","issues_debates":"Issues & Debates","approach":"Approach","other":"Other"};
+const CMD_LABELS = {"define":"Define / State","outline":"Outline","describe":"Describe","explain":"Explain","suggest":"Suggest","compare":"Compare","analyse":"Analyse","evaluate":"Evaluate","plan":"Plan"};
+const SESSION_LABELS = {"m":"march","s":"summer","w":"winter"};
+const PAPER_LABELS = {"1":"Paper 1","2":"Paper 2","3":"Paper 3","4":"Paper 4"};
+const BASE_URL = "/cie-al-psychology-9990";
+
+      const $ = (id) => document.getElementById(id);
+      const BASE = BASE_URL.endsWith('/') ? BASE_URL : BASE_URL + '/';
+
+      const sel = {
+        paper: $('f-paper'),
+        topic: $('f-topic'),
+        type: $('f-type'),
+        year: $('f-year'),
+        session: $('f-session'),
+        cmd: $('f-cmd'),
+        marks: $('f-marks'),
+        search: $('f-search'),
+      };
+      const topicSel = sel.topic;
+      const qlist = $('qlist');
+      const countEl = $('result-count');
+      const emptyHint = $('empty-hint');
+      const loadingEl = $('loading');
+
+      const esc = (s) =>
+        String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+      const seasonEn = (ses) => SESSION_LABELS[ses] ?? ses;
+      const partLabel = (q) => (q.part && q.subpart ? `${q.part}(${q.subpart})` : (q.part || q.subpart || ''));
+      const groupUid = (uid) => uid.replace(/([0-9]+)[a-z]+$/i, '$1');
+      const groupKey = (q) => `${q.paper.no}-${q.series.year}-${q.series.session}-${q.paper.variant}-${q.q_no}`;
+
+      let QUESTIONS = [];
+
+      // 聚合为“一道大题”的卡片
+      function buildGroups(qs) {
+        const seen = new Map();
+        const groups = [];
+        for (const q of qs) {
+          const k = groupKey(q);
+          let g = seen.get(k);
+          if (!g) {
+            g = {
+              key: k, uid: groupUid(q.uid),
+              source: ['9990', String(q.series.year), seasonEn(q.series.session),
+                PAPER_LABELS[q.paper.no] ?? `Paper ${q.paper.no}`, `Variant ${q.paper.variant}`, `Q${q.q_no}`],
+              stem: '', items: [], topics: new Set(), types: new Set(), cmds: new Set(), marks: new Set(), has_figure: false,
+              search: '',
+            };
+            seen.set(k, g); groups.push(g);
+          }
+          const st = (q.stem_text || '').trim();
+          if (!g.stem && st) g.stem = st;
+          g.items.push(q);
+          (q.topics || []).forEach((t) => g.topics.add(t));
+          g.types.add(q.type_facet || 'other');
+          (q.command_words || []).forEach((c) => g.cmds.add(c));
+          if (q.marks != null) g.marks.add(q.marks);
+          if (q.has_figure) g.has_figure = true;
+          g.search += ' ' + (q.text || '').toLowerCase() + ' ' + st.toLowerCase();
+        }
+        groups.forEach((g) => {
+          g.topics = [...g.topics]; g.types = [...g.types]; g.cmds = [...g.cmds];
+          g.marks = [...g.marks].sort((a, b) => a - b);
+        });
+        return groups;
+      }
+
+      function cardHTML(g) {
+        const srcTags = g.source.map((t) => `<span class="badge bg-gray-100 text-gray-600">${esc(t)}</span>`).join('');
+        const mkTags = g.marks.map((m) => `<span class="badge bg-amber-50 text-amber-700">[${m}]</span>`).join('');
+        const fig = g.has_figure ? `<span class="badge bg-rose-50 text-rose-700">含图</span>` : '';
+        const ctx = g.stem ? `<p class="card-ctx">${esc(g.stem)}</p>` : '';
+        const parts = g.items.map((q) => {
+          const pl = q.part ? `<span class="part-label">${esc(partLabel(q))}</span>` : '';
+          return `<p class="card-part">${pl}${esc(q.text)}</p>`;
+        }).join('');
+        const topicTags = g.topics.map((t) => `<span class="badge bg-emerald-50 text-emerald-700">${esc(TOPIC_LABELS[t] ?? t)}</span>`).join('');
+        const typeTags = g.types.map((t) => `<span class="badge bg-sky-50 text-sky-700">${esc(TYPE_LABELS[t] ?? t)}</span>`).join('');
+        const cmdTags = g.cmds.map((c) => `<span class="badge bg-violet-50 text-violet-700">${esc(CMD_LABELS[c] ?? c)}</span>`).join('');
+        return `<article class="card" data-topics="${esc(g.topics.join(' '))}" data-paper="${g.source[3].replace('Paper ', '')}" data-type="${esc(g.types.join(' '))}" data-year="${g.source[1]}" data-session="${esc(g.items[0].series.session)}" data-cmd="${esc(g.cmds.join(' '))}" data-marks="${esc(g.marks.join(' '))}" data-search="${esc(g.search)}">
+          <div class="card-top">
+            <div class="card-src">${srcTags}${mkTags}${fig}</div>
+            <span class="card-uid">№ ${esc(g.uid)}</span>
+          </div>
+          <div class="card-q">
+            ${ctx}
+            <div class="card-parts">${parts}</div>
+          </div>
+          <div class="card-tags">${topicTags}${typeTags}${cmdTags}</div>
+        </article>`;
+      }
+
+      function render(qs) {
+        const groups = buildGroups(qs);
+        qlist.innerHTML = groups.map(cardHTML).join('');
+        apply();
+      }
+
+      function apply() {
+        const paper = sel.paper.value;
+        const topic = sel.topic.value;
+        const type = sel.type.value;
+        const year = sel.year.value;
+        const session = sel.session.value;
+        const cmd = sel.cmd.value;
+        const marks = sel.marks.value;
+        const q = sel.search.value.trim().toLowerCase();
+        let n = 0;
+        qlist.querySelectorAll('.card').forEach((c) => {
+          const topics = (c.dataset.topics || '').split(' ').filter(Boolean);
+          const cmds = (c.dataset.cmd || '').split(' ').filter(Boolean);
+          const types = (c.dataset.type || '').split(' ').filter(Boolean);
+          const marksSet = (c.dataset.marks || '').split(' ').filter(Boolean);
+          const ok = (!paper || c.dataset.paper === paper) &&
+            (!topic || topics.includes(topic)) &&
+            (!type || types.includes(type)) &&
+            (!year || c.dataset.year === year) &&
+            (!session || c.dataset.session === session) &&
+            (!cmd || cmds.includes(cmd)) &&
+            (!marks || marksSet.includes(marks)) &&
+            (!q || (c.dataset.search || '').includes(q));
+          c.classList.toggle('is-hidden', !ok);
+          if (ok) n++;
+        });
+        countEl.textContent = String(n);
+        emptyHint.classList.toggle('hidden', n !== 0);
+      }
+
+      // 重建 Study 下拉（按 Paper 切换）
+      function rebuildTopic(paper) {
+        const groups = TOPICS_BY_PAPER[paper] || [];
+        topicSel.innerHTML = '';
+        const all = document.createElement('option'); all.value = ''; all.textContent = 'All studies';
+        topicSel.appendChild(all);
+        for (const g of groups) {
+          const og = document.createElement('optgroup'); og.label = g.label;
+          for (const id of g.ids) {
+            const o = document.createElement('option'); o.value = id; o.textContent = TOPIC_LABELS[id] ?? id;
+            og.appendChild(o);
+          }
+          topicSel.appendChild(og);
+        }
+      }
+
+      // 用数据填充 Year/Session/Cmd/Marks 下拉
+      function fillSelect(selEl, values) {
+        const cur = selEl.value;
+        selEl.innerHTML = '<option value="">' + (selEl.id === 'f-year' ? 'All years' : selEl.id === 'f-session' ? 'All sessions' : selEl.id === 'f-cmd' ? 'All command words' : 'All marks') + '</option>';
+        values.forEach((v) => {
+          const o = document.createElement('option'); o.value = v; o.textContent = (selEl.id === 'f-session' ? (SESSION_LABELS[v] ?? v) : (selEl.id === 'f-cmd' ? (CMD_LABELS[v] ?? v) : v)); selEl.appendChild(o);
+        });
+        selEl.value = cur;
+      }
+
+      sel.paper.addEventListener('change', () => { rebuildTopic(Number(sel.paper.value) || 1); apply(); });
+      Object.values(sel).forEach((el) => el && el.addEventListener('input', apply));
+      $('btn-reset').addEventListener('click', () => {
+        Object.values(sel).forEach((el) => el && (el.value = ''));
+        rebuildTopic(1); apply();
+      });
+      rebuildTopic(1);
+
+      // 运行时拉取数据（保存后刷新即反映最新）
+      (async () => {
+        try {
+          const r = await fetch(BASE + 'data/questions.json', { cache: 'no-store' });
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          QUESTIONS = await r.json();
+          fillSelect(sel.year, [...new Set(QUESTIONS.map((q) => q.series.year))].sort((a, b) => a - b));
+          fillSelect(sel.session, [...new Set(QUESTIONS.map((q) => q.series.session))].sort());
+          fillSelect(sel.cmd, [...new Set(QUESTIONS.flatMap((q) => q.command_words))].filter(Boolean).sort());
+          fillSelect(sel.marks, [...new Set(QUESTIONS.map((q) => q.marks).filter((m) => m != null))].sort((a, b) => a - b));
+          loadingEl.classList.add('hidden');
+          qlist.classList.remove('hidden');
+          render(QUESTIONS);
+        } catch (e) {
+          loadingEl.textContent = '题目数据加载失败，请稍后刷新重试。';
+          console.error(e);
+        }
+      })();
+    })();</script> </body> </html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html><html lang="zh-CN"> <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0"><title>题库校对后台 · CIE A-Level Psychology 9990</title><meta name="description" content="Review and edit question tags for the CIE A-Level Psychology 9990 question bank."><link rel="stylesheet" href="/cie-al-psychology-9990/_astro/admin.C-BeF0pO.css">
+<style>.adm-ver{font-size:.7rem;opacity:.9}#list{display:flex;flex-direction:column;gap:.7rem}.adm-card{background:#fff;border:1px solid #e6ebf1;border-left:4px solid var(--theme);border-radius:12px;padding:.8rem 1rem;box-shadow:0 1px 2px #2f4a630f}.adm-card.editing{background:#f3f8ff;box-shadow:inset 4px 0 0 var(--theme)}.adm-card-head{display:flex;align-items:center;gap:.5rem;flex-wrap:wrap}.adm-uid{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.7rem;color:var(--theme-dark);white-space:nowrap}.adm-src{display:flex;flex-wrap:wrap;gap:.25rem;flex:1 1 auto}.adm-card-body{margin-top:.5rem;display:flex;flex-direction:column;gap:.4rem}.adm-text{font-weight:600;color:#1f2937;font-size:.92rem;line-height:1.55;white-space:pre-line;word-break:break-word}.adm-topics{display:flex;flex-wrap:wrap;gap:.3rem}.adm-editor-slot{margin-top:.7rem}.adm-changed{color:#16a34a;font-weight:600;font-size:.72rem}.adm-edit-btn{font-size:.72rem;padding:.18rem .7rem;border-radius:6px;border:1px solid var(--theme-tint2);background:var(--theme-tint);color:var(--theme-dark);cursor:pointer}.adm-edit-btn:hover{background:var(--theme-tint2)}.editor{padding:.75rem .9rem;background:var(--theme-tint);border-radius:10px;display:grid;gap:.7rem}.editor .ed-head{font-size:.74rem;color:var(--theme-dark);font-weight:700;display:flex;align-items:center;gap:.4rem}.editing-pill{display:inline-block;background:var(--theme);color:#fff;font-size:.62rem;padding:.05rem .45rem;border-radius:9999px;font-weight:700}.mono{font-family:ui-monospace,Menlo,Consolas,monospace}.editor .ed-row{display:grid;gap:.3rem}.editor label.ed-lbl{font-size:.72rem;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:.04em}.editor label.ed-lbl.plain{text-transform:none;letter-spacing:0;font-weight:600;font-size:.74rem}.editor input[type=text],.editor input[type=number],.editor textarea,.editor select{border:1px solid #cbd5e1;border-radius:7px;padding:.35rem .5rem;font-size:.82rem;width:100%;font-family:inherit}.editor textarea{line-height:1.5;resize:vertical}.editor .src-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(7rem,1fr));gap:.5rem}.editor .grp-title{font-size:.68rem;text-transform:uppercase;letter-spacing:.05em;color:var(--theme);font-weight:700;margin-top:.2rem}.editor .study-chk{display:inline-flex;align-items:center;gap:.3rem;margin:.1rem .6rem .1rem 0;font-size:.78rem}.editor .study-chk input{accent-color:var(--theme)}.editor .ed-actions{display:flex;gap:.5rem;align-items:center}.editor .ed-actions .save{background:var(--theme);color:#fff;border:none;border-radius:7px;padding:.35rem .9rem;cursor:pointer;font-size:.8rem}.editor .ed-actions .save:hover{background:var(--theme-hover)}.editor .ed-actions .reset{background:#fff;border:1px solid #cbd5e1;border-radius:7px;padding:.35rem .9rem;cursor:pointer;font-size:.8rem}
+</style></head> <body class="bg-gray-50 text-gray-800"> <header class="site-header"> <div class="max-w-5xl mx-auto px-4 py-4"> <h1>CIE A-Level Psychology 9990</h1> <p class="site-sub">by Angel Zhang · <span class="adm-ver">后台 v2（卡片式重写）</span></p> </div> </header> <!-- 密码 gate（每次访问都需要验证） --> <div id="gate" class="fixed inset-0 z-50 flex flex-col items-center justify-center"> <div class="bg-white border border-gray-200 rounded-lg shadow-xl p-6 w-80"> <h2 class="text-lg font-bold text-theme-dark mb-2">管理员验证</h2> <p class="text-sm text-gray-600 mb-3">请输入后台密码</p> <div class="flex items-center gap-2"> <input id="pw" type="password" class="border border-gray-300 rounded px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-theme" placeholder="Password"> <button id="pw-help" class="help-btn" title="提示" aria-label="帮助">?</button> </div> <div id="pw-hint" class="help-tip hidden">提示：选手编号</div> <button id="pw-btn" class="bg-theme text-white px-4 py-2 rounded w-full mt-3 hover-bg-theme">进入</button> <p id="pw-err" class="text-red-600 text-xs mt-2 hidden">密码错误</p> </div> </div> <main class="max-w-5xl mx-auto px-4 py-5"> <div id="loading" class="text-center text-gray-400 text-sm py-10">正在加载题库…</div> <div id="app" class="hidden"> <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-900"> <strong>如何使用：</strong>
+每道题是一张<strong>卡片</strong>。点卡片上的 <em>编辑</em>，编辑器会<strong>在该卡片内部、题面正下方</strong>就地展开（绝不在右侧）。
+          可改任意字段：来源标签、题面、大题干、对应实验/视角（可多选）、研究切面、命令词、分值。
+          改完点 <em>发布到网站</em> 即可把改动<strong>永久写入题库并即时更新线上</strong>（右上角填 GitHub Token）。
+          也可 <em>导出 JSON</em> 下载发给我人工处理。
+</div> <div class="flex flex-wrap gap-2 items-center mb-3"> <input id="adm-search" type="search" placeholder="按编号 / 题号 / 题面筛选…" class="border rounded px-2 py-1.5 text-sm text-gray-800 w-64"> <button id="btn-expand" class="text-sm px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 border border-gray-300">展开全部</button> <button id="btn-collapse" class="text-sm px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 border border-gray-300">收起全部</button> <span class="grow"></span> <label class="flex items-center gap-1 text-xs text-gray-600">
+GitHub Token
+<input id="gh-token" type="password" placeholder="粘贴 fine-grained PAT（repo 权限）" class="border rounded px-2 py-1.5 text-sm w-56"> </label> <button id="btn-publish" class="text-sm px-3 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700">发布到网站</button> <button id="btn-export" class="text-sm px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 border border-gray-300">导出 JSON</button> <button id="btn-copy" class="text-sm px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 border border-gray-300">复制 JSON</button> <span id="changed-count" class="text-sm text-emerald-700 font-semibold"></span> </div> <p id="save-status" class="hidden text-sm text-emerald-700 font-semibold -mt-2 mb-3"></p> <div id="list"></div> <div class="mt-4"> <p class="text-xs text-gray-500 mb-1">导出预览（仅含已改动题目）：</p> <textarea id="json-preview" readonly placeholder="暂无改动"></textarea> </div> </div> </main>  <script>(function(){const TOPICS_BY_PAPER = {"1":[{"label":"Biological","ids":["study.dement_kleitman","study.hassett","study.holzel"]},{"label":"Cognitive","ids":["study.andrade","study.baron_cohen","study.pozzulo"]},{"label":"Learning","ids":["study.bandura","study.fagen","study.saavedra_silverman"]},{"label":"Social","ids":["study.milgram","study.perry","study.piliavin"]},{"label":"Approaches (视角)","ids":["approach.biological","approach.cognitive","approach.learning","approach.social"]}],"2":[{"label":"Methods","ids":["method.experiment","method.self_report","method.case_study","method.observation","method.correlation","method.longitudinal"]},{"label":"Concepts","ids":["concept.aims_hypotheses","concept.variables","concept.controls","concept.types_of_data","concept.sampling","concept.ethics","concept.reliability","concept.validity","concept.data_analysis","concept.evaluating"]}],"3":[],"4":[]};
+const TOPIC_LABELS = {"study.dement_kleitman":"Dement & Kleitman (sleep and dreams)","study.hassett":"Hassett et al. (monkey toy preferences)","study.holzel":"Hölzel et al. (mindfulness and brain scans)","study.andrade":"Andrade (doodling)","study.baron_cohen":"Baron-Cohen et al. (eyes test)","study.pozzulo":"Pozzulo et al. (line-ups)","study.bandura":"Bandura et al. (aggression)","study.fagen":"Fagen et al. (elephant learning)","study.saavedra_silverman":"Saavedra & Silverman (button phobia)","study.milgram":"Milgram (obedience)","study.perry":"Perry et al. (personal space)","study.piliavin":"Piliavin et al. (subway Samaritan)","approach.biological":"Biological approach","approach.cognitive":"Cognitive approach","approach.learning":"Learning approach","approach.social":"Social approach","method.experiment":"Experiments","method.self_report":"Self-reports","method.case_study":"Case studies","method.observation":"Observations","method.correlation":"Correlations","method.longitudinal":"Longitudinal","concept.aims_hypotheses":"Aims & hypotheses","concept.variables":"Variables","concept.controls":"Controls","concept.types_of_data":"Types of data","concept.sampling":"Sampling","concept.ethics":"Ethics","concept.reliability":"Reliability","concept.validity":"Validity","concept.data_analysis":"Data analysis","concept.evaluating":"Evaluating research"};
+const TYPE_LABELS = {"background":"Background","psychology_investigated":"Psychology Investigated","aim":"Aim","hypothesis":"Hypothesis","research_method_design":"Method + Design","sample":"Sample","procedure":"Procedure","result":"Result","conclusion":"Conclusion","strengths_weaknesses":"Strengths & Weaknesses","application_everyday":"Application","issues_debates":"Issues & Debates","approach":"Approach","other":"Other"};
+const CMD_LABELS = {"define":"Define / State","outline":"Outline","describe":"Describe","explain":"Explain","suggest":"Suggest","compare":"Compare","analyse":"Analyse","evaluate":"Evaluate","plan":"Plan"};
+const SESSION_LABELS = {"m":"march","s":"summer","w":"winter"};
+const PAPER_LABELS = {"1":"Paper 1","2":"Paper 2","3":"Paper 3","4":"Paper 4"};
+const BASE_URL = "/cie-al-psychology-9990";
+
+      const $ = (id) => document.getElementById(id);
+      const BASE = BASE_URL.endsWith('/') ? BASE_URL : BASE_URL + '/';
+      const REPO = 'azqi27/cie-al-psychology-9990';
+      const API = 'https://api.github.com';
+      const list = $('list');
+      const groups = TOPICS_BY_PAPER[1] || [];
+      const STORAGE_KEY = 'qb-edits-cie-al-psychology-9990';
+      const TOKEN_KEY = 'gh-token-cie-al-psychology-9990';
+
+      // —— 密码 gate：每次访问都要求 ——
+      const gate = $('gate');
+      const PASS = '08042';
+      $('pw-btn').addEventListener('click', () => {
+        if ($('pw').value === PASS) gate.hidden = true;
+        else $('pw-err').classList.remove('hidden');
+      });
+      $('pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('pw-btn').click(); });
+      $('pw-help').addEventListener('click', () => $('pw-hint').classList.toggle('hidden'));
+
+      // —— Token 输入记忆（仅存本机，不写入源码）——
+      const tokenInput = $('gh-token');
+      tokenInput.value = localStorage.getItem(TOKEN_KEY) || '';
+      tokenInput.addEventListener('input', () => localStorage.setItem(TOKEN_KEY, tokenInput.value.trim()));
+
+      const esc = (s) =>
+        String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+      let DATA = [];
+      const ORIG = {};
+      const edits = {};
+
+      const cur = (id) => edits[id] || ORIG[id];
+      const topicLabel = (id) => TOPIC_LABELS[id] ?? id;
+      const typeLabel = (id) => TYPE_LABELS[id] ?? id;
+
+      function snapEq(a, b) {
+        const keys = ['text', 'stem_text', 'topics', 'type_facet', 'command_words', 'marks', 'year', 'session', 'paper_no', 'variant', 'q_no', 'part'];
+        return keys.every((k) => {
+          if (k === 'topics' || k === 'command_words') {
+            const x = a[k] || [], y = b[k] || [];
+            return x.length === y.length && x.every((v, i) => v === y[i]);
+          }
+          return (a[k] ?? '') === (b[k] ?? '');
+        });
+      }
+
+      function setField(id, field, value) {
+        if (!edits[id]) edits[id] = { ...ORIG[id] };
+        edits[id][field] = value;
+        if (snapEq(edits[id], ORIG[id])) delete edits[id];
+        refreshCard(DATA.find((q) => q.id === id));
+        updateSummary();
+      }
+
+      function refreshCard(q) {
+        const card = list.querySelector(`article.adm-card[data-id="${q.id}"]`);
+        if (!card) return;
+        const s = cur(q.id);
+        card.querySelector('.adm-text').textContent = s.text || '';
+        card.querySelector('.adm-topics').innerHTML = (s.topics || []).map((t) => `<span class="badge bg-emerald-50 text-emerald-700">${esc(topicLabel(t))}</span>`).join(' ');
+        card.querySelector('.adm-src').innerHTML = (s.tags || []).filter((t) => t !== '').map((t) => `<span class="badge bg-gray-100 text-gray-600">${esc(t)}</span>`).join(' ');
+        const changed = !!edits[q.id];
+        card.classList.toggle('editing', changed);
+        const flag = card.querySelector('.adm-changed');
+        if (flag) flag.style.display = changed ? '' : 'none';
+      }
+
+      function buildEditor(q) {
+        const s = cur(q.id);
+        const wrap = document.createElement('div');
+        wrap.className = 'editor';
+        wrap.innerHTML = `<div class="ed-head">正在编辑：<span class="mono">${esc(s.uid)}</span> <span class="editing-pill">编辑中</span></div>`;
+
+        const srcRow = document.createElement('div');
+        srcRow.className = 'ed-row';
+        srcRow.innerHTML = '<label class="ed-lbl">来源标签 (Source)</label>';
+        const grid = document.createElement('div'); grid.className = 'src-grid';
+        const srcFields = [['year', 'Year', 'number'], ['session', 'Session', 'select', [['m', 'march'], ['s', 'summer'], ['w', 'winter']]], ['paper_no', 'Paper', 'number'], ['variant', 'Variant', 'number'], ['q_no', 'Q no', 'text'], ['part', 'Part', 'text']];
+        srcFields.forEach((f) => {
+          const cell = document.createElement('div');
+          const lab = document.createElement('label'); lab.className = 'ed-lbl plain'; lab.textContent = f[1];
+          let inp;
+          if (f[2] === 'select') { inp = document.createElement('select'); f[3].forEach(([v, l]) => { const o = document.createElement('option'); o.value = v; o.textContent = l; inp.appendChild(o); }); }
+          else { inp = document.createElement('input'); inp.type = f[2]; }
+          inp.value = s[f[0]] ?? '';
+          inp.addEventListener('input', () => setField(q.id, f[0], f[2] === 'number' ? (inp.value ? Number(inp.value) : null) : inp.value));
+          cell.appendChild(lab); cell.appendChild(inp); grid.appendChild(cell);
+        });
+        srcRow.appendChild(grid); wrap.appendChild(srcRow);
+
+        const tRow = document.createElement('div'); tRow.className = 'ed-row';
+        tRow.innerHTML = '<label class="ed-lbl">题面 (Question text)</label>';
+        const ta = document.createElement('textarea'); ta.rows = 4; ta.value = s.text || '';
+        ta.addEventListener('input', () => setField(q.id, 'text', ta.value));
+        tRow.appendChild(ta); wrap.appendChild(tRow);
+
+        const sRow = document.createElement('div'); sRow.className = 'ed-row';
+        sRow.innerHTML = '<label class="ed-lbl">Context / 大题干（可选）</label>';
+        const sa = document.createElement('textarea'); sa.rows = 2; sa.value = s.stem_text || '';
+        sa.addEventListener('input', () => setField(q.id, 'stem_text', sa.value));
+        sRow.appendChild(sa); wrap.appendChild(sRow);
+
+        const tpRow = document.createElement('div'); tpRow.className = 'ed-row';
+        tpRow.innerHTML = '<label class="ed-lbl">知识点 / 视角（可多选）</label>';
+        groups.forEach((g) => {
+          const gt = document.createElement('div'); gt.className = 'grp-title'; gt.textContent = g.label; tpRow.appendChild(gt);
+          g.ids.forEach((id) => {
+            const lab = document.createElement('label'); lab.className = 'study-chk';
+            const cb = document.createElement('input'); cb.type = 'checkbox'; cb.value = id; cb.checked = (s.topics || []).includes(id);
+            cb.addEventListener('change', () => { const checked = Array.from(tpRow.querySelectorAll('.study-chk input:checked')).map((c) => c.value); setField(q.id, 'topics', checked); });
+            lab.appendChild(cb); lab.appendChild(document.createTextNode(topicLabel(id))); tpRow.appendChild(lab);
+          });
+        });
+        wrap.appendChild(tpRow);
+
+        const tyRow = document.createElement('div'); tyRow.className = 'ed-row';
+        tyRow.innerHTML = '<label class="ed-lbl">研究切面 (Type)</label>';
+        const sel = document.createElement('select');
+        Object.entries(TYPE_LABELS).forEach(([id, label]) => { const o = document.createElement('option'); o.value = id; o.textContent = label; if ((s.type_facet || 'other') === id) o.selected = true; sel.appendChild(o); });
+        sel.addEventListener('change', () => setField(q.id, 'type_facet', sel.value));
+        tyRow.appendChild(sel); wrap.appendChild(tyRow);
+
+        const cRow = document.createElement('div'); cRow.className = 'ed-row';
+        cRow.innerHTML = '<label class="ed-lbl">命令词 (Command words，逗号分隔)</label>';
+        const ci = document.createElement('input'); ci.type = 'text'; ci.value = (s.command_words || []).join(', ');
+        ci.addEventListener('input', () => setField(q.id, 'command_words', ci.value.split(',').map((x) => x.trim()).filter(Boolean)));
+        cRow.appendChild(ci); wrap.appendChild(cRow);
+
+        const mRow = document.createElement('div'); mRow.className = 'ed-row';
+        mRow.innerHTML = '<label class="ed-lbl">分值 (Marks)</label>';
+        const mi = document.createElement('input'); mi.type = 'number'; mi.value = s.marks ?? '';
+        mi.addEventListener('input', () => setField(q.id, 'marks', mi.value ? Number(mi.value) : null));
+        mRow.appendChild(mi); wrap.appendChild(mRow);
+
+        const act = document.createElement('div'); act.className = 'ed-actions';
+        const done = document.createElement('button'); done.className = 'save'; done.textContent = '完成';
+        done.addEventListener('click', () => { const slot = list.querySelector(`article.adm-card[data-id="${q.id}"] .adm-editor-slot`); if (slot) slot.hidden = true; });
+        const reset = document.createElement('button'); reset.className = 'reset'; reset.textContent = '重置本行';
+        reset.addEventListener('click', () => { delete edits[q.id]; refreshCard(q); updateSummary(); const slot = list.querySelector(`article.adm-card[data-id="${q.id}"] .adm-editor-slot`); if (slot) { slot.hidden = true; slot.dataset.built = ''; slot.innerHTML = ''; } });
+        act.appendChild(done); act.appendChild(reset); wrap.appendChild(act);
+        return wrap;
+      }
+
+      function buildList() {
+        DATA.forEach((q) => {
+          const card = document.createElement('article');
+          card.className = 'adm-card';
+          card.dataset.id = q.id;
+          card.innerHTML = `
+            <div class="adm-card-head">
+              <span class="adm-uid mono">${esc(q.uid)}</span>
+              <span class="adm-src"></span>
+              <button class="adm-edit-btn">编辑</button>
+              <span class="adm-changed" style="display:none">已改</span>
+            </div>
+            <div class="adm-card-body">
+              <div class="adm-text"></div>
+              <div class="adm-topics"></div>
+            </div>
+            <div class="adm-editor-slot" hidden></div>`;
+          const slot = card.querySelector('.adm-editor-slot');
+          card.querySelector('.adm-edit-btn').addEventListener('click', () => {
+            if (slot.hidden) {
+              if (!slot.dataset.built) { slot.appendChild(buildEditor(q)); slot.dataset.built = '1'; }
+              slot.hidden = false;
+            } else slot.hidden = true;
+          });
+          list.appendChild(card);
+          refreshCard(q);
+        });
+      }
+
+      function updateSummary() {
+        const ids = Object.keys(edits);
+        $('changed-count').textContent = ids.length ? `已改动 ${ids.length} 题` : '';
+        $('json-preview').value = ids.length ? JSON.stringify(buildPayload(), null, 2) : '';
+      }
+
+      function buildPayload() {
+        const out = {};
+        for (const id of Object.keys(edits)) {
+          const e = edits[id];
+          out[id] = { uid: ORIG[id]?.uid, text: e.text, stem_text: e.stem_text, topics: e.topics, type_facet: e.type_facet, command_words: e.command_words, marks: e.marks, series: { year: e.year, session: e.session }, paper: { no: e.paper_no, variant: e.variant }, q_no: e.q_no, part: e.part || null };
+        }
+        return { edited_at: new Date().toISOString(), edits: out };
+      }
+
+      // —— GitHub 永久发布（Bearer，兼容 fine-grained）——
+      function b64(s) { return btoa(unescape(encodeURIComponent(s))); }
+      async function ghGet(path) {
+        const token = tokenInput.value.trim();
+        const r = await fetch(`${API}${path}`, { headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json' } });
+        if (!r.ok) throw new Error(`GET ${path} -> ${r.status}`);
+        return r.json();
+      }
+      async function ghPut(path, content, sha, message) {
+        const token = tokenInput.value.trim();
+        const r = await fetch(`${API}${path}`, { method: 'PUT', headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' }, body: JSON.stringify({ message, content: b64(content), sha }) });
+        if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(`PUT ${path} -> ${r.status} ${e.message || ''}`); }
+        return true;
+      }
+
+      async function publish() {
+        const ids = Object.keys(edits);
+        if (!ids.length) { alert('暂无改动可发布。'); return; }
+        const token = tokenInput.value.trim();
+        if (!token) { alert('请先在右上角填写 GitHub Token（fine-grained，需 Contents 权限）。'); tokenInput.focus(); return; }
+        if (!confirm(`确定把 ${ids.length} 题的改动永久发布到网站吗？`)) return;
+        const status = $('save-status'); status.classList.remove('hidden'); status.style.color = '#2f4a63'; status.textContent = '正在发布…';
+        try {
+          const remote = DATA.map((q) => (edits[q.id] ? edits[q.id] : q));
+          const live = await ghGet(`/repos/${REPO}/contents/data/questions.json?ref=gh-pages`);
+          await ghPut(`/repos/${REPO}/contents/data/questions.json`, JSON.stringify(remote), live.sha, `Update questions via admin (${ids.length} edits)`);
+
+          const byFile = {};
+          for (const id of ids) { const f = ORIG[id].file; (byFile[f] = byFile[f] || new Set()).add(id); }
+          for (const file of Object.keys(byFile)) {
+            const gj = await ghGet(`/repos/${REPO}/contents/data/questions/${file}?ref=main`);
+            const lines = atob(gj.content.replace(/\n/g, '')).split('\n').filter((l) => l.trim());
+            const updated = lines.map((l) => {
+              const o = JSON.parse(l);
+              if (byFile[file].has(o.id)) { const e = edits[o.id]; o.text = e.text; o.stem_text = e.stem_text; o.topics = e.topics; o.type_facet = e.type_facet; o.command_words = e.command_words; o.marks = e.marks; o.series = { year: e.year, session: e.session }; o.paper = { no: e.paper_no, variant: e.variant }; o.q_no = e.q_no; o.part = e.part || null; }
+              return JSON.stringify(o);
+            });
+            await ghPut(`/repos/${REPO}/contents/data/questions/${file}`, updated.join('\n') + '\n', gj.sha, `Update ${file} via admin`);
+          }
+
+          ids.forEach((id) => { ORIG[id] = { ...ORIG[id], ...edits[id] }; delete edits[id]; refreshCard(DATA.find((q) => q.id === id)); });
+          updateSummary();
+          status.style.color = '#16a34a';
+          status.textContent = `✅ 已永久发布 ${ids.length} 题，线上约 1 分钟后生效。`;
+          setTimeout(() => status.classList.add('hidden'), 6000);
+        } catch (e) {
+          status.style.color = '#dc2626';
+          status.textContent = '发布失败：' + e.message + '（可改用“导出 JSON”发给我人工处理）';
+          console.error(e);
+        }
+      }
+
+      function exportJSON() {
+        const payload = buildPayload();
+        if (!payload || !Object.keys(payload.edits).length) { alert('暂无改动可导出。'); return; }
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'qb-edits.json'; a.click(); URL.revokeObjectURL(a.href);
+      }
+      async function copyJSON() {
+        const val = $('json-preview').value;
+        if (!val) { alert('暂无改动可复制。'); return; }
+        try { await navigator.clipboard.writeText(val); alert('已复制到剪贴板。'); }
+        catch { $('json-preview').select(); document.execCommand('copy'); alert('已选中，请按 Ctrl/Cmd+C 复制。'); }
+      }
+
+      $('adm-search').addEventListener('input', (e) => {
+        const q = e.target.value.trim().toLowerCase();
+        DATA.forEach((d) => {
+          const hide = q && !(d.uid.toLowerCase().includes(q) || d.id.toLowerCase().includes(q) || d.text.toLowerCase().includes(q));
+          const card = list.querySelector(`article.adm-card[data-id="${d.id}"]`);
+          if (card) card.style.display = hide ? 'none' : '';
+          const slot = card ? card.querySelector('.adm-editor-slot') : null;
+          if (slot) slot.style.display = hide ? 'none' : '';
+        });
+      });
+      $('btn-expand').addEventListener('click', () => DATA.forEach((d) => { const slot = list.querySelector(`article.adm-card[data-id="${d.id}"] .adm-editor-slot`); if (slot && slot.hidden) { if (!slot.dataset.built) { slot.appendChild(buildEditor(d)); slot.dataset.built = '1'; } slot.hidden = false; } }));
+      $('btn-collapse').addEventListener('click', () => list.querySelectorAll('.adm-editor-slot').forEach((slot) => (slot.hidden = true)));
+      $('btn-publish').addEventListener('click', publish);
+      $('btn-export').addEventListener('click', exportJSON);
+      $('btn-copy').addEventListener('click', copyJSON);
+
+      // —— 运行时加载题库 ——
+      (async () => {
+        try {
+          const r = await fetch(BASE + 'data/questions.json', { cache: 'no-store' });
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          const arr = await r.json();
+          DATA = arr.map((q) => ({
+            id: q.id, uid: q.uid, file: q.file,
+            tags: ['9990', String(q.series.year), SESSION_LABELS[q.series.session] || q.series.session, PAPER_LABELS[q.paper.no] ?? `Paper ${q.paper.no}`, `Variant ${q.paper.variant}`, `Q${q.q_no}`, q.part || ''],
+            text: q.text, stem_text: q.stem_text, topics: q.topics, type_facet: q.type_facet, cmd: q.command_words, marks: q.marks,
+            year: q.series.year, session: q.series.session, paper_no: q.paper.no, variant: q.paper.variant, q_no: q.q_no, part: q.part,
+          }));
+          DATA.forEach((q) => (ORIG[q.id] = { ...q }));
+          $('loading').classList.add('hidden');
+          $('app').classList.remove('hidden');
+          buildList();
+          updateSummary();
+        } catch (e) {
+          $('loading').textContent = '题库加载失败：' + e.message;
+          console.error(e);
+        }
+      })();
+    })();</script> </body> </html>
