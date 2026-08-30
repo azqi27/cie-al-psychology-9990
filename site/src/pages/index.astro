@@ -127,7 +127,7 @@ const BASE_URL = import.meta.env.BASE_URL;
 
     <script define:vars={{ TOPICS_BY_PAPER, TOPIC_LABELS, TYPE_LABELS, CMD_LABELS, SESSION_LABELS, PAPER_LABELS, BASE_URL }}>
       const $ = (id) => document.getElementById(id);
-      const BASE = BASE_URL;
+      const BASE = BASE_URL.endsWith('/') ? BASE_URL : BASE_URL + '/';
 
       const sel = {
         paper: $('f-paper'),
