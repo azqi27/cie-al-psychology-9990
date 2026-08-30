@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { questions, effectiveType, sourceTags } from '../lib/loadQuestions';
+import { questions, effectiveType } from '../lib/loadQuestions';
 import {
   TOPICS_BY_PAPER,
   TOPIC_LABELS,
@@ -14,7 +14,15 @@ import {
 const DATA = questions.map((q) => ({
   id: q.id,
   uid: q.uid,
-  tags: sourceTags(q),
+  tags: [
+    '9990',
+    String(q.series.year),
+    SESSION_LABELS[q.series.session] || q.series.session,
+    PAPER_LABELS[q.paper.no] ?? `Paper ${q.paper.no}`,
+    `Variant ${q.paper.variant}`,
+    `Q${q.q_no}`,
+    q.part || '',
+  ],
   text: q.text,
   stem_text: q.stem_text,
   topics: q.topics,
@@ -41,21 +49,33 @@ const DATA = questions.map((q) => ({
   </head>
   <body class="bg-gray-50 text-gray-800">
     <header class="site-header">
-      <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <span class="brand-mark">9990</span>
-          <h1 class="text-lg truncate">题库校对后台 · CIE A-Level Psychology 9990</h1>
-        </div>
-        <a href="./" class="header-link">返回题库</a>
+      <div class="max-w-7xl mx-auto px-4 py-4">
+        <h1>CIE A-Level Psychology 9990</h1>
       </div>
     </header>
+
+    <!-- 密码 gate -->
+    <div id="gate" class="fixed inset-0 z-50 flex flex-col items-center justify-center">
+      <div class="bg-white border border-gray-200 rounded-lg shadow-xl p-6 w-80">
+        <h2 class="text-lg font-bold text-theme-dark mb-2">管理员验证</h2>
+        <p class="text-sm text-gray-600 mb-4">请输入后台密码</p>
+        <input
+          id="pw"
+          type="password"
+          class="border border-gray-300 rounded px-3 py-2 w-full mb-3 focus:outline-none focus:ring-2 focus:ring-theme"
+          placeholder="Password"
+        />
+        <button id="pw-btn" class="bg-theme text-white px-4 py-2 rounded w-full hover-bg-theme">进入</button>
+        <p id="pw-err" class="text-red-600 text-xs mt-2 hidden">密码错误</p>
+      </div>
+    </div>
 
     <main class="max-w-7xl mx-auto px-4 py-5">
       <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-900">
         <strong>如何使用：</strong>
         点任意题目的 <em>编辑</em> 就地展开编辑栏（不会跳到列表末尾），编辑中的题目会高亮。
         可修改：来源标签、题面、大题干、对应实验/视角（可多选）、研究切面、命令词、分值等任意字段。
-        改完后点 <em>导出修改 (JSON)</em> 下载 <code>qb-edits.json</code>，交给维护脚本写回数据并重新发布；或直接把文件发给我，由我帮你应用并部署。
+        改完后点 <em>保存</em> 直接把改动存到当前浏览器，刷新后仍可见；若要把改动永久发布到网站，请点 <em>导出 JSON</em> 下载 <code>qb-edits.json</code>，发给我即可应用并重新部署。
       </div>
 
       <div class="flex flex-wrap gap-2 items-center mb-3">
@@ -68,10 +88,12 @@ const DATA = questions.map((q) => ({
         <button id="btn-expand" class="text-sm px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 border border-gray-300">展开全部</button>
         <button id="btn-collapse" class="text-sm px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 border border-gray-300">收起全部</button>
         <span class="grow"></span>
-        <button id="btn-export" class="text-sm px-3 py-1.5 rounded bg-theme text-white hover-bg-theme">导出修改 (JSON)</button>
+        <button id="btn-save" class="text-sm px-3 py-1.5 rounded bg-theme text-white hover-bg-theme">保存</button>
+        <button id="btn-export" class="text-sm px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 border border-gray-300">导出 JSON</button>
         <button id="btn-copy" class="text-sm px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 border border-gray-300">复制 JSON</button>
         <span id="changed-count" class="text-sm text-emerald-700 font-semibold"></span>
       </div>
+      <p id="save-status" class="hidden text-sm text-emerald-700 font-semibold -mt-2 mb-3"></p>
 
       <div class="overflow-auto border rounded-lg bg-white">
         <table class="admin-table">
@@ -99,6 +121,7 @@ const DATA = questions.map((q) => ({
       const $ = (id) => document.getElementById(id);
       const body = $('adm-body');
       const groups = TOPICS_BY_PAPER[1] || []; // 12 篇实验 + 4 视角，按分组
+      const STORAGE_KEY = 'qb-edits-cie-al-psychology-9990';
 
       // 原始快照（用于判定是否改动）
       const ORIG = {};
@@ -113,19 +136,6 @@ const DATA = questions.map((q) => ({
 
       // 当前快照（编辑优先）
       const cur = (id) => edits[id] || ORIG[id];
-
-      function tagsOf(s) {
-        const arr = [
-          '9990',
-          s.year,
-          SESSION_LABELS[s.session] || s.session,
-          'Paper ' + (s.paper_no || 1),
-          'Variant ' + s.variant,
-          'Q' + s.q_no,
-        ];
-        if (s.part) arr.push(s.part);
-        return arr;
-      }
 
       // 数组感知的相等比较
       function snapEq(a, b) {
@@ -152,7 +162,8 @@ const DATA = questions.map((q) => ({
         const tr = body.querySelector(`tr[data-id="${q.id}"]`);
         if (!tr) return;
         const s = cur(q.id);
-        tr.querySelector('.cell-tags').innerHTML = tagsOf(s)
+        tr.querySelector('.cell-tags').innerHTML = (s.tags || [])
+          .filter((t) => t !== '')
           .map((t) => `<span class="badge bg-gray-100 text-gray-600">${esc(t)}</span>`)
           .join(' ');
         tr.querySelector('.cell-text').textContent = s.text || '';
@@ -402,6 +413,35 @@ const DATA = questions.map((q) => ({
         return { edited_at: new Date().toISOString(), edits: out };
       }
 
+      function saveToStorage() {
+        const payload = buildPayload();
+        if (!payload) { alert('暂无改动可保存。'); return; }
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+          const status = $('save-status');
+          status.textContent = `已保存 ${Object.keys(payload.edits).length} 题改动到当前浏览器（仅本设备可见）`;
+          status.classList.remove('hidden');
+          setTimeout(() => status.classList.add('hidden'), 4000);
+        } catch (e) {
+          alert('保存失败：' + e.message);
+        }
+      }
+
+      function loadFromStorage() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          if (!raw) return;
+          const parsed = JSON.parse(raw);
+          if (parsed && parsed.edits) {
+            Object.assign(edits, parsed.edits);
+            DATA.forEach((d) => refreshRow(d));
+            updateSummary();
+          }
+        } catch (e) {
+          console.error('load edits failed', e);
+        }
+      }
+
       // 筛选
       $('adm-search').addEventListener('input', (e) => {
         const q = e.target.value.trim().toLowerCase();
@@ -432,6 +472,8 @@ const DATA = questions.map((q) => ({
         body.querySelectorAll('tr.detail-row').forEach((dr) => (dr.hidden = true));
       });
 
+      $('btn-save').addEventListener('click', saveToStorage);
+
       $('btn-export').addEventListener('click', () => {
         const payload = buildPayload();
         if (!payload) { alert('暂无改动可导出。'); return; }
@@ -450,7 +492,22 @@ const DATA = questions.map((q) => ({
         catch { $('json-preview').select(); document.execCommand('copy'); alert('已选中，请按 Ctrl/Cmd+C 复制。'); }
       });
 
+      // 密码 gate
+      const gate = $('gate');
+      const PASS = '08042';
+      $('pw-btn').addEventListener('click', () => {
+        if ($('pw').value === PASS) {
+          sessionStorage.setItem('admin_ok', '1');
+          gate.hidden = true;
+        } else {
+          $('pw-err').classList.remove('hidden');
+        }
+      });
+      $('pw').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('pw-btn').click(); });
+      if (sessionStorage.getItem('admin_ok') === '1') gate.hidden = true;
+
       buildTable();
+      loadFromStorage();
       updateSummary();
     </script>
   </body>

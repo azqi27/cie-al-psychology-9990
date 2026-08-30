@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { questions, effectiveType, sourceTags, seasonEn, partLabel } from '../lib/loadQuestions';
+import { questions, effectiveType, seasonEn, partLabel } from '../lib/loadQuestions';
 import {
   TOPIC_LABELS,
   TYPE_LABELS,
@@ -18,17 +18,88 @@ const marksList = [
 ].sort((a, b) => a - b);
 const papersList = [1, 2, 3, 4];
 
-const qLabel = (q: (typeof questions)[number]) => `Q${q.q_no}${partLabel(q)}`;
-const searchBlob = (q: (typeof questions)[number]) => `${q.stem_text} ${q.text}`.toLowerCase();
+const groupKey = (q: (typeof questions)[number]) =>
+  `${q.paper.no}-${q.series.year}-${q.series.session}-${q.paper.variant}-${q.q_no}`;
 
-// 大题干呈现规则：
-//  - 有小题（part）的题目：stem_text 是共享背景（如 "From the study by Baron-Cohen et al. (eyes test):"），与小题正文不同 → 展示为美观的“背景”块。
-//  - 无小题的题目：stem_text 只是题面去掉开头题号的副本 → 不再单独展示，避免题目重复显示两遍。
-const hasRealStem = (q: (typeof questions)[number]) => {
-  if (!q.part) return false;
-  const s = (q.stem_text || '').trim();
-  return !!s && !/^\d+$/.test(s);
-};
+const groupUid = (q: (typeof questions)[number]) =>
+  q.uid.replace(/([0-9]+)[a-z]+$/i, '$1');
+
+interface QGroup {
+  key: string;
+  uid: string;
+  source: string[];
+  paper_no: number;
+  year: number;
+  session: string;
+  variant: number;
+  q_no: string;
+  stem_text: string;
+  items: (typeof questions)[number][];
+  topics: string[];
+  types: string[];
+  cmds: string[];
+  marks: number[];
+  has_figure: boolean;
+  searchBlob: string;
+}
+
+const groups: QGroup[] = [];
+const seen = new Map<string, QGroup>();
+for (const q of questions) {
+  const k = groupKey(q);
+  let g = seen.get(k);
+  if (!g) {
+    g = {
+      key: k,
+      uid: groupUid(q),
+      source: [
+        '9990',
+        String(q.series.year),
+        seasonEn(q),
+        PAPER_LABELS[q.paper.no] ?? `Paper ${q.paper.no}`,
+        `Variant ${q.paper.variant}`,
+        `Q${q.q_no}`,
+      ],
+      paper_no: q.paper.no,
+      year: q.series.year,
+      session: q.series.session,
+      variant: q.paper.variant,
+      q_no: q.q_no,
+      stem_text: (q.stem_text || '').trim(),
+      items: [],
+      topics: [],
+      types: [],
+      cmds: [],
+      marks: [],
+      has_figure: false,
+      searchBlob: '',
+    };
+    seen.set(k, g);
+    groups.push(g);
+  }
+  g.items.push(q);
+}
+
+for (const g of groups) {
+  const topics = new Set<string>();
+  const types = new Set<string>();
+  const cmds = new Set<string>();
+  const marks: number[] = [];
+  let search = g.stem_text.toLowerCase();
+  for (const q of g.items) {
+    q.topics.forEach((t) => topics.add(t));
+    types.add(effectiveType(q));
+    q.command_words.forEach((c) => cmds.add(c));
+    if (q.marks != null) marks.push(q.marks);
+    if (q.has_figure) g.has_figure = true;
+    search += ' ' + q.text.toLowerCase();
+  }
+  g.topics = [...topics];
+  g.types = [...types];
+  g.cmds = [...cmds];
+  g.marks = [...new Set(marks)].sort((a, b) => a - b);
+  g.searchBlob = search;
+}
 ---
 
 <!doctype html>
@@ -43,14 +114,10 @@ const hasRealStem = (q: (typeof questions)[number]) => {
     />
   </head>
   <body class="bg-gray-50 text-gray-800">
-    <!-- 顶部 -->
+    <!-- 顶部：仅保留大标题 -->
     <header class="site-header">
-      <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
-        <div class="flex items-center gap-2.5 min-w-0">
-          <span class="brand-mark">9990</span>
-          <h1 class="text-lg sm:text-xl truncate">CIE A-Level Psychology 9990</h1>
-        </div>
-        <a href="admin" class="header-link">校对后台</a>
+      <div class="max-w-6xl mx-auto px-4 py-4">
+        <h1>CIE A-Level Psychology 9990</h1>
       </div>
     </header>
 
@@ -66,7 +133,7 @@ const hasRealStem = (q: (typeof questions)[number]) => {
           </select>
         </label>
 
-        <!-- 知识点（12 篇实验，单选下拉；卡片标签仍可为多实验） -->
+        <!-- 知识点（12 篇实验 + 4 视角，单选下拉；卡片标签仍可为多） -->
         <label class="flex flex-col text-xs font-medium text-gray-600">
           Study
           <select id="f-topic" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800 min-w-[14rem]">
@@ -134,7 +201,7 @@ const hasRealStem = (q: (typeof questions)[number]) => {
         </button>
 
         <div class="text-xs text-gray-500 self-center">
-          匹配到 <span id="result-count" class="font-semibold text-theme-dark">{questions.length}</span> 题
+          匹配到 <span id="result-count" class="font-semibold text-theme-dark">{groups.length}</span> 题
         </div>
       </div>
     </div>
@@ -142,44 +209,45 @@ const hasRealStem = (q: (typeof questions)[number]) => {
     <!-- 卡片列表 -->
     <main class="max-w-6xl mx-auto px-4 py-6">
       <div id="qlist" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {questions.map((q) => (
+        {groups.map((g) => (
           <article
             class="card bg-white rounded-lg shadow-sm border border-gray-100 p-4 flex flex-col gap-2"
-            data-topics={q.topics.join(' ')}
-            data-paper={String(q.paper.no)}
-            data-type={effectiveType(q)}
-            data-year={String(q.series.year)}
-            data-session={q.series.session}
-            data-cmd={q.command_words.join(' ')}
-            data-marks={q.marks != null ? String(q.marks) : ''}
-            data-search={searchBlob(q)}
+            data-topics={g.topics.join(' ')}
+            data-paper={String(g.paper_no)}
+            data-type={g.types.join(' ')}
+            data-year={String(g.year)}
+            data-session={g.session}
+            data-cmd={g.cmds.join(' ')}
+            data-marks={g.marks.join(' ')}
+            data-search={g.searchBlob}
           >
             <div class="flex flex-wrap items-center gap-1.5">
-              {sourceTags(q).map((t) => (
+              {g.source.map((t) => (
                 <span class="badge bg-gray-100 text-gray-600">{t}</span>
               ))}
-              {q.marks != null && <span class="badge bg-amber-50 text-amber-700">[{q.marks}]</span>}
-              {q.has_figure && <span class="badge bg-rose-50 text-rose-700">含图</span>}
-              <span class="q-uid ml-auto">№ {q.uid}</span>
+              {g.marks.map((m) => <span class="badge bg-amber-50 text-amber-700">[{m}]</span>)}
+              {g.has_figure && <span class="badge bg-rose-50 text-rose-700">含图</span>}
+              <span class="q-uid ml-auto">№ {g.uid}</span>
             </div>
 
-            {hasRealStem(q) && (
-              <div class="stem-box">
-                <span class="stem-cap">Context</span>
-                {q.stem_text}
-              </div>
-            )}
-
-            <p class="qtext text-sm text-gray-900">{q.text}</p>
+            <div class="question-body text-sm text-gray-900">
+              {g.stem_text && g.items.some((q) => q.part) && (
+                <p>{g.stem_text}</p>
+              )}
+              {g.items.map((q) => (
+                <p>
+                  {q.part && <span class="part-label">{partLabel(q)}</span>}
+                  {q.text}
+                </p>
+              ))}
+            </div>
 
             <div class="flex flex-wrap gap-1.5 mt-auto pt-2">
-              {q.topics.map((t) => (
+              {g.topics.map((t) => (
                 <span class="badge bg-emerald-50 text-emerald-700">{TOPIC_LABELS[t] ?? t}</span>
               ))}
-              <span class="badge bg-sky-50 text-sky-700">{TYPE_LABELS[effectiveType(q)] ?? effectiveType(q)}</span>
-              {q.command_words.map((c) => (
-                <span class="badge bg-violet-50 text-violet-700">{CMD_LABELS[c] ?? c}</span>
-              ))}
+              {g.types.map((t) => <span class="badge bg-sky-50 text-sky-700">{TYPE_LABELS[t] ?? t}</span>)}
+              {g.cmds.map((c) => <span class="badge bg-violet-50 text-violet-700">{CMD_LABELS[c] ?? c}</span>)}
             </div>
           </article>
         ))}
@@ -190,10 +258,9 @@ const hasRealStem = (q: (typeof questions)[number]) => {
       </p>
     </main>
 
-      <footer class="max-w-6xl mx-auto px-4 py-8 text-center text-xs text-gray-400">
-        题目整理自历年真题 PDF · 按 2024–2026 考纲 ·
-        <a href="admin" class="underline hover:text-theme">题库校对后台</a>
-      </footer>
+    <footer class="max-w-6xl mx-auto px-4 py-8 text-center text-xs text-gray-400">
+      题目整理自历年真题 PDF · 按 2024–2026 考纲
+    </footer>
 
     <script define:vars={{ TOPICS_BY_PAPER, TOPIC_LABELS }}>
       const $ = (id) => document.getElementById(id);
@@ -212,7 +279,7 @@ const hasRealStem = (q: (typeof questions)[number]) => {
       const countEl = $('result-count');
       const emptyHint = $('empty-hint');
 
-      // 知识点（实验）分组在卡片数据中出现、但不在已知分组里的，作为“其他”兜底
+      // 知识点（实验/视角）分组在卡片数据中出现、但不在已知分组里的，作为“其他”兜底
       const knownTopics = new Set(
         Object.values(TOPICS_BY_PAPER).flatMap((gs) => gs.flatMap((g) => g.ids))
       );
@@ -266,13 +333,15 @@ const hasRealStem = (q: (typeof questions)[number]) => {
         for (const c of cards) {
           const topics = (c.dataset.topics || '').split(' ').filter(Boolean);
           const cmds = (c.dataset.cmd || '').split(' ').filter(Boolean);
+          const types = (c.dataset.type || '').split(' ').filter(Boolean);
+          const marksSet = (c.dataset.marks || '').split(' ').filter(Boolean);
           const okPaper = !paper || c.dataset.paper === paper;
           const okTopic = !topic || topics.includes(topic);
-          const okType = !type || (c.dataset.type || '') === type;
+          const okType = !type || types.includes(type);
           const okYear = !year || c.dataset.year === year;
           const okSession = !session || c.dataset.session === session;
           const okCmd = !cmd || cmds.includes(cmd);
-          const okMarks = !marks || c.dataset.marks === marks;
+          const okMarks = !marks || marksSet.includes(marks);
           const okQ = !q || (c.dataset.search || '').includes(q);
           const show = okPaper && okTopic && okType && okYear && okSession && okCmd && okMarks && okQ;
           c.classList.toggle('is-hidden', !show);
