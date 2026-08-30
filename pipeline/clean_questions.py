@@ -34,6 +34,9 @@ REDUNDANT_PATTERNS = [
     r'Page \d+',
     r'\[ DO NOT WRITE \]',
     r'DO NOT WRITE',
+    # 防御性：末尾版权/页脚声明（正常情况下已被控制字符截断剔除）
+    r'\s*Permission to reproduce items.*',
+    r'\s*Section [A-Z] Answer all questions.*',
 ]
 
 # 结尾残留的分值标记，如 " 1" 或 " [4]" 或 " (4 marks)"
@@ -42,11 +45,31 @@ TRAILING_MARK = re.compile(r'(?:\s*\[\s*\d{1,2}\s*(?:marks?)?\s*\]|\s*[\(\[]?\d{
 LEADING_NUM = re.compile(r'^\s*\d{1,3}\s*[.)]?\s*')
 # 仅由数字组成的“大题干”（只含题号）
 NUMERIC_ONLY = re.compile(r'^\d+$')
+# PDF 抽取残留的二进制/控制字符块（如 \x01\x01\x02 + 乱码 + 页脚版权声明）
+CTRL = re.compile(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]')
 
 
 def strip_redundant(s: str) -> str:
     for pat in REDUNDANT_PATTERNS:
         s = re.sub(pat, ' ', s, flags=re.IGNORECASE)
+    return s
+
+
+def strip_binary_garbage(s: str) -> str:
+    """切断 PDF 抽取残留的二进制/乱码块。
+
+    这类污染形如：真实题干以句号结束，随后被追加 ', \\x01\\x01\\x02 ... , <乱码> DFD.'
+    （有时还带 'Permission to reproduce…' / 'Section B Answer all questions' 页脚）。
+    第一个控制字符一定出现在污染块开头，故从首个控制字符处截断即可一并剔除乱码与页脚；
+    截断后若残留结尾的 ',' 或空白，一并去掉。幂等：无控制字符时原样返回。
+    """
+    if not s:
+        return s
+    m = CTRL.search(s)
+    if not m:
+        return s
+    s = s[:m.start()]
+    s = re.sub(r'[,\s]+$', '', s)
     return s
 
 
@@ -63,6 +86,7 @@ def add_period(s: str) -> str:
 def clean_field(s: str, part: str | None = None) -> str:
     if s is None:
         return ''
+    s = strip_binary_garbage(s)
     s = strip_redundant(s)
     # 去结尾残留分值
     s = TRAILING_MARK.sub('', s).strip()
@@ -82,6 +106,7 @@ def clean_field(s: str, part: str | None = None) -> str:
 def clean_stem(s: str) -> str:
     if s is None:
         return ''
+    s = strip_binary_garbage(s)
     s = strip_redundant(s)
     s = TRAILING_MARK.sub('', s).strip()
     s = LEADING_NUM.sub('', s).strip()
