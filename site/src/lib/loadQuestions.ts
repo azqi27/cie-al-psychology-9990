@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { SESSION_LABELS, PAPER_LABELS } from './taxonomy';
 
 export interface Question {
   id: string;
@@ -68,4 +69,29 @@ export const questions: Question[] = loadAll();
 // 题目展示用“有效研究切面”：未命中分类的统一记作 other
 export function effectiveType(q: Question): string {
   return q.type_facet || 'other';
+}
+
+// 考季英文（march / summer / winter）
+export function seasonEn(q: Question): string {
+  return SESSION_LABELS[q.series.session] ?? q.series.session;
+}
+
+// 小问标签，如 a / b(i)
+export function partLabel(q: Question): string {
+  if (q.part && q.subpart) return `${q.part}(${q.subpart})`;
+  return q.part || q.subpart || '';
+}
+
+// 来源标签（需求 7）：9990 - yyyy - 考季 - Paper n - Variant n - Qn - 小问
+// 每个元素做成一个 badge，替换原 "9990/11 · Q5(b)" 标签
+export function sourceTags(q: Question): string[] {
+  return [
+    '9990',
+    String(q.series.year),
+    seasonEn(q),
+    PAPER_LABELS[q.paper.no] ?? `Paper ${q.paper.no}`,
+    `Variant ${q.paper.variant}`,
+    `Q${q.q_no}`,
+    partLabel(q),
+  ];
 }

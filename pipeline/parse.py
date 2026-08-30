@@ -142,10 +142,40 @@ def parse_paper(text):
     return questions
 
 # ---------- 自动标注 ----------
-STUDY_DICT = {
+# ---------- 文本清洗（需求 6） ----------
+ANSWER_LINE = re.compile(r'^[\s.\-_·‐‑‒–—_{}()\[\]]+$')
+NOISE = re.compile(r'UCLES|Turn over|©|Cambridge International|For Examiner|Examiner.{0,6}Use|'
+                   r'DO NOT WRITE|Blank page|This page is intentionally|www\.Cambridge|'
+                   r'Maximum mark|Total .{0,4}\d{1,3}|Question\s*\d+\s*\(', re.I)
+MARK_RE2 = re.compile(r'\[\s*\d{1,2}\s*\]')
+
+def clean_question(s):
+    if not s:
+        return ''
+    s = re.split(r'\.{8,}', s, maxsplit=1)[0]      # 截掉答案下划线之后的内容（含二进制残骸）
+    s = re.sub(r'\*\s*\d{4,}\s*\*', ' ', s)         # 孤立 * 数字 * 残骸
+    out = []
+    for ln in s.split('\n'):
+        t = ln.replace('\r', '').strip()
+        if ANSWER_LINE.match(t):
+            continue
+        if NOISE.search(t):
+            continue
+        out.append(t)
+    txt = ' '.join(out)
+    txt = MARK_RE2.sub('', txt)                     # 去掉行尾 [n] 分值
+    txt = re.sub(r'\s+', ' ', txt).strip().strip(' .-_')
+    return txt
+
+def norm(s):
+    s = s.lower()
+    return s.replace('ö', 'oe').replace('ä', 'ae').replace('ü', 'ue').replace('ß', 'ss')
+
+# ---------- 实验映射（需求 3：仅 12 篇核心实验） ----------
+STUDY_DICT = {  # 研究者姓氏 → 实验（含变音归一键）
     'dement': 'study.dement_kleitman', 'kleitman': 'study.dement_kleitman',
     'hassett': 'study.hassett',
-    'holzel': 'study.holzel',
+    'holzel': 'study.holzel', 'hoelzel': 'study.holzel',
     'andrade': 'study.andrade',
     'baron': 'study.baron_cohen', 'cohen': 'study.baron_cohen',
     'pozzulo': 'study.pozzulo',
@@ -156,23 +186,69 @@ STUDY_DICT = {
     'perry': 'study.perry',
     'piliavin': 'study.piliavin',
 }
+# 研究内容关键词（高精确，避免误命中）
+CONTENT = {
+    'study.dement_kleitman': ['rem sleep', 'rem was', 'rem ', 'dream', 'eeg', 'eye movement'],
+    'study.holzel': ['mindfulness', 'meditat', 'ffmq', 'five facet', 'body scan', 'mbsr', 'mindful',
+                     'cannot relax', 'feel stressed', 'relax more', 'workers relax', 'help its workers', 'stress reduction'],
+    'study.hassett': ['toy preference', 'vervet', 'monkey', 'sex difference', 'gender difference'],
+    'study.andrade': ['doodl', 'daydream'],
+    'study.baron_cohen': ['eyes test', 'reading the mind', 'autism', ' asd', 'hfa', 'sally-anne', 'sally anne', 'mind-blind', 'mindblind'],
+    'study.pozzulo': ['line-up', 'lineup', 'eyewitness', 'identified from a line', 'line-up'],
+    'study.bandura': ['bobo', 'aggression', 'imitation'],
+    'study.fagen': ['elephant'],
+    'study.saavedra_silverman': ['button', 'phobia', 'fear of'],
+    'study.milgram': ['obedience', 'shock', 'authority'],
+    'study.perry': ['personal space'],
+    'study.piliavin': ['subway', 'bystander', 'emergency', 'new york'],
+}
+APPROACH_STUDIES = {
+    'biological': ['study.dement_kleitman', 'study.hassett', 'study.holzel'],
+    'cognitive': ['study.andrade', 'study.baron_cohen', 'study.pozzulo'],
+    'learning': ['study.bandura', 'study.fagen', 'study.saavedra_silverman'],
+    'social': ['study.milgram', 'study.perry', 'study.piliavin'],
+}
 APPROACH_KW = {
-    'approach.biological': ['biological', 'brain', 'neuron', 'neuro', 'scan', 'mri', 'hormone', 'genetic', 'dopamine', 'serotonin'],
-    'approach.cognitive':  ['cognitive', 'memory', 'attention', 'schema', 'reconstructive', 'mental'],
-    'approach.learning':   ['conditioning', 'reinforcement', 'imitation', 'social learning', 'behaviourist', 'behaviour'],
-    'approach.social':     ['conformity', 'obedience', 'bystander', 'proximity', 'social'],
+    'biological': ['biological approach', 'biological'],
+    'cognitive': ['cognitive approach', 'cognitive'],
+    'learning': ['learning approach', 'learning'],
+    'social': ['social approach', 'social'],
 }
-DEBATE_KW = {
-    'debate.application_everyday': ['application to everyday life', 'everyday life', 'real life', 'real-world', 'real world'],
-    'debate.individual_situational': ['individual', 'situational'],
-    'debate.nature_nurture': ['nature', 'nurture'],
-    'debate.use_of_children': ['child', 'children'],
-    'debate.use_of_animals': ['animal', 'animals'],
-    'debate.cultural_differences': ['culture', 'cultural'],
-    'debate.reductionism_holism': ['reductionis', 'holism', 'holistic'],
-    'debate.determinism_freewill': ['determinis', 'free will'],
-    'debate.idiographic_nomothetic': ['idiographic', 'nomothetic'],
-}
+
+def is_garbage(text):
+    """丢弃 PDF 抽取残骸：无字母、或大量非 ASCII 乱码。"""
+    if not re.search(r'[A-Za-z]', text):
+        return True
+    if len(text) > 12:
+        na = sum(1 for ch in text if ord(ch) > 127)
+        if na / len(text) > 0.3:
+            return True
+    return False
+
+def detect_studies(text, stem):
+    """返回 (named_studies:set, approach_studies:set, flags:list)。
+    named=姓氏/内容命中；approach=视角级题目回溯到的该视角全部实验。"""
+    blob = norm(text + ' ' + stem)
+    named = set()
+    flags = []
+    for tok, tid in STUDY_DICT.items():
+        if re.search(r'\b' + re.escape(tok), blob):
+            named.add(tid)
+    for tid, kws in CONTENT.items():
+        if any(k in blob for k in kws):
+            named.add(tid)
+    approach_hit = None
+    for ap, kws in APPROACH_KW.items():
+        if any(k in blob for k in kws):
+            approach_hit = ap
+            break
+    approach_studies = set()
+    if not named and approach_hit:
+        approach_studies = set(APPROACH_STUDIES[approach_hit])
+        flags.append('approach_general')
+    if len(named) >= 2:
+        flags.append('multi_study')
+    return named, approach_studies, flags
 # P1 题型 = 研究切面（用户 2026-08-30 指定 13 类 + other；优先级从高到低，首个命中为准）
 TYPE_P1 = [
     ('background',            ['brief background', 'background to the study', 'background of the study',
@@ -279,19 +355,14 @@ CMD_MAP = {
 }
 
 def tag_topics_p1(text):
-    t = text.lower()
-    topics, conf = [], 0.0
-    for tok, tid in STUDY_DICT.items():
-        if re.search(r'\b' + re.escape(tok), t):
-            topics.append(tid); conf = max(conf, 0.9); break
-    if not topics:
-        for tid, kws in APPROACH_KW.items():
-            if any(k in t for k in kws):
-                topics.append(tid); conf = max(conf, 0.6); break
-    for tid, kws in DEBATE_KW.items():
-        if any(k in t for k in kws):
-            topics.append(tid); conf = max(conf, 0.7)
-    return topics, round(conf, 2)
+    """需求 3：知识点仅 12 篇实验。返回 (studies_set, confidence)。"""
+    named, approach_studies, flags = detect_studies(text, '')
+    studies = named if named else approach_studies
+    if not studies:
+        return set(), 0.0
+    if 'approach_general' in flags:
+        return set(studies), 0.4
+    return set(studies), 0.9
 
 def tag_topics_p2(text):
     t = text.lower()
@@ -347,13 +418,16 @@ def main():
         for q in qs:
             part = q['part']; sub = q['subpart']
             leaf_id = f"q{q['qno']}{part}{('_'+sub) if sub else ''}"
-            full = (q['stem'] + ' ' + q['text']).strip()
+            clean_stem = clean_question(q['stem'])
+            clean_qtext = clean_question(q['text'])
+            full = (clean_stem + ' ' + clean_qtext).strip()
             if meta['paper'] == 1:
                 topics, tconf = tag_topics_p1(full)
                 ttype, pconf = tag_type_p1(full)
             else:
                 topics, tconf = tag_topics_p2(full)
                 ttype, pconf = None, 0.0   # Q4: P2 题型留空
+            topics = sorted(topics)          # set → 有序列表（仅 12 实验）
             cmd = tag_cmd(q['text'])
             fig = has_figure(full)
             rec = {
@@ -365,8 +439,8 @@ def main():
                 "q_no": q['qno'], "part": part or None, "subpart": sub or None,
                 "marks": q['marks'],
                 "section": q['section'],
-                "stem_text": q['stem'],
-                "text": q['text'],
+                "stem_text": clean_stem,
+                "text": clean_qtext,
                 "has_figure": fig,
                 "topics": topics,
                 "type_facet": ttype,            # P1=研究切面, P2=null
