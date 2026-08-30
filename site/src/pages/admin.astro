@@ -1,17 +1,33 @@
 ---
 import '../styles/global.css';
 import { questions, effectiveType, sourceTags } from '../lib/loadQuestions';
-import { TOPICS_BY_PAPER, TOPIC_LABELS, TYPE_LABELS } from '../lib/taxonomy';
+import {
+  TOPICS_BY_PAPER,
+  TOPIC_LABELS,
+  TYPE_LABELS,
+  CMD_LABELS,
+  SESSION_LABELS,
+  PAPER_LABELS,
+} from '../lib/taxonomy';
 
 // 把题库整张表传给前端，作为“可查看、可编辑的数据库”形式。
 const DATA = questions.map((q) => ({
   id: q.id,
+  uid: q.uid,
   tags: sourceTags(q),
   text: q.text,
+  stem_text: q.stem_text,
   topics: q.topics,
   type: effectiveType(q),
+  type_facet: q.type_facet,
   cmd: q.command_words,
   marks: q.marks,
+  year: q.series.year,
+  session: q.series.session,
+  paper_no: q.paper.no,
+  variant: q.paper.variant,
+  q_no: q.q_no,
+  part: q.part,
 }));
 ---
 
@@ -24,34 +40,35 @@ const DATA = questions.map((q) => ({
     <meta name="description" content="Review and edit question tags for the CIE A-Level Psychology 9990 question bank." />
   </head>
   <body class="bg-gray-50 text-gray-800">
-    <header class="bg-indigo-700 text-white">
-      <div class="max-w-7xl mx-auto px-4 py-5">
-        <h1 class="text-xl font-bold">题库校对后台 · CIE A-Level Psychology 9990</h1>
-        <p class="mt-1 text-indigo-100 text-xs">
-          共 {DATA.length} 题 · 勾选每题对应的 12 篇实验并调整“研究切面”，然后导出修改文件。
-        </p>
+    <header class="site-header">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <span class="brand-mark">9990</span>
+          <h1 class="text-lg truncate">题库校对后台 · CIE A-Level Psychology 9990</h1>
+        </div>
+        <a href="./" class="header-link">返回题库</a>
       </div>
     </header>
 
     <main class="max-w-7xl mx-auto px-4 py-5">
       <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-900">
         <strong>如何使用：</strong>
-        在下方表格中展开任意题目，勾选它对应的实验（可多选）、必要时改“研究切面”，改动会标绿。
-        改完后点 <em>导出修改 (JSON)</em> 下载 <code>qb-edits.json</code>。
-        把该文件交给维护脚本（<code>pipeline/apply_edits.py</code>）写回数据并重新发布；或直接把文件发给我，由我帮你应用并部署。
+        点任意题目的 <em>编辑</em> 就地展开编辑栏（不会跳到列表末尾），编辑中的题目会高亮。
+        可修改：来源标签、题面、大题干、对应实验/视角（可多选）、研究切面、命令词、分值等任意字段。
+        改完后点 <em>导出修改 (JSON)</em> 下载 <code>qb-edits.json</code>，交给维护脚本写回数据并重新发布；或直接把文件发给我，由我帮你应用并部署。
       </div>
 
       <div class="flex flex-wrap gap-2 items-center mb-3">
         <input
           id="adm-search"
           type="search"
-          placeholder="按题号或题面筛选…"
-          class="border rounded px-2 py-1.5 text-sm text-gray-800 w-64"
+          placeholder="按编号 / 题号 / 题面筛选…"
+          class="border rounded px-2 py-1.5 text-sm text-gray-800 w-72"
         />
         <button id="btn-expand" class="text-sm px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 border border-gray-300">展开全部</button>
         <button id="btn-collapse" class="text-sm px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 border border-gray-300">收起全部</button>
         <span class="grow"></span>
-        <button id="btn-export" class="text-sm px-3 py-1.5 rounded bg-indigo-600 text-white hover:bg-indigo-700">导出修改 (JSON)</button>
+        <button id="btn-export" class="text-sm px-3 py-1.5 rounded bg-theme text-white hover-bg-theme">导出修改 (JSON)</button>
         <button id="btn-copy" class="text-sm px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 border border-gray-300">复制 JSON</button>
         <span id="changed-count" class="text-sm text-emerald-700 font-semibold"></span>
       </div>
@@ -60,11 +77,12 @@ const DATA = questions.map((q) => ({
         <table class="admin-table">
           <thead>
             <tr>
-              <th style="width:18%">来源</th>
-              <th style="width:34%">题面</th>
-              <th style="width:20%">当前知识点</th>
+              <th style="width:9%">编号</th>
+              <th style="width:17%">来源</th>
+              <th style="width:32%">题面</th>
+              <th style="width:20%">知识点 / 视角</th>
               <th style="width:10%">研究切面</th>
-              <th style="width:8%">操作</th>
+              <th style="width:12%">操作</th>
             </tr>
           </thead>
           <tbody id="adm-body"></tbody>
@@ -77,182 +95,346 @@ const DATA = questions.map((q) => ({
       </div>
     </main>
 
-    <script define:vars={{ DATA, TOPICS_BY_PAPER, TOPIC_LABELS, TYPE_LABELS }}>
+    <script define:vars={{ DATA, TOPICS_BY_PAPER, TOPIC_LABELS, TYPE_LABELS, CMD_LABELS, SESSION_LABELS, PAPER_LABELS }}>
       const $ = (id) => document.getElementById(id);
-      // 原始状态（用于判断是否改动）
-      const ORIG = {};
-      DATA.forEach((q) => (ORIG[q.id] = { topics: [...q.topics], type: q.type }));
-      // 编辑状态
-      const edits = {}; // id -> { topics:[], type }
-
       const body = $('adm-body');
-      const groups = TOPICS_BY_PAPER[1] || []; // 12 篇实验，按视角分组
+      const groups = TOPICS_BY_PAPER[1] || []; // 12 篇实验 + 4 视角，按分组
 
-      function topicLabel(id) { return TOPIC_LABELS[id] ?? id; }
-      function typeLabel(id) { return TYPE_LABELS[id] ?? id; }
+      // 原始快照（用于判定是否改动）
+      const ORIG = {};
+      DATA.forEach((q) => (ORIG[q.id] = { ...q }));
+      // 编辑覆盖：id -> 完整可编辑快照
+      const edits = {};
 
-      function buildDetail(q) {
-        const cur = edits[q.id] || { topics: [...q.topics], type: q.type };
-        const wrap = document.createElement('td');
-        wrap.colSpan = 5;
-        const box = document.createElement('div');
-        box.className = 'p-2';
+      const esc = (s) =>
+        String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+      const topicLabel = (id) => TOPIC_LABELS[id] ?? id;
+      const typeLabel = (id) => TYPE_LABELS[id] ?? id;
 
-        // 实验多选
-        const lab = document.createElement('div');
-        lab.className = 'text-xs font-semibold text-gray-600 mb-1';
-        lab.textContent = '对应实验（可多选）：';
-        box.appendChild(lab);
+      // 当前快照（编辑优先）
+      const cur = (id) => edits[id] || ORIG[id];
 
-        groups.forEach((g) => {
-          const grp = document.createElement('div');
-          grp.className = 'mb-1';
-          const gl = document.createElement('div');
-          gl.className = 'text-[10px] uppercase tracking-wide text-gray-400';
-          gl.textContent = g.label;
-          grp.appendChild(gl);
-          g.ids.forEach((id) => {
-            const lab2 = document.createElement('label');
-            lab2.className = 'study-chk';
-            const cb = document.createElement('input');
-            cb.type = 'checkbox';
-            cb.value = id;
-            cb.checked = cur.topics.includes(id);
-            cb.addEventListener('change', () => onTopicChange(q.id));
-            lab2.appendChild(cb);
-            lab2.appendChild(document.createTextNode(topicLabel(id)));
-            grp.appendChild(lab2);
-          });
-          box.appendChild(grp);
-        });
-
-        // 研究切面
-        const fl = document.createElement('div');
-        fl.className = 'text-xs font-semibold text-gray-600 mt-2 mb-1';
-        fl.textContent = '研究切面：';
-        box.appendChild(fl);
-        const sel = document.createElement('select');
-        sel.className = 'border rounded px-2 py-1 text-sm';
-        Object.entries(TYPE_LABELS).forEach(([id, label]) => {
-          const o = document.createElement('option');
-          o.value = id; o.textContent = label;
-          if (id === cur.type) o.selected = true;
-          sel.appendChild(o);
-        });
-        sel.addEventListener('change', () => { edits[q.id] = edits[q.id] || { topics: [...q.topics], type: q.type }; edits[q.id].type = sel.value; markChanged(q.id); });
-        box.appendChild(sel);
-
-        // 重置本行
-        const rst = document.createElement('button');
-        rst.className = 'admin-edit-btn ml-3';
-        rst.textContent = '重置本行';
-        rst.addEventListener('click', () => { delete edits[q.id]; renderRow(q); });
-        box.appendChild(rst);
-
-        wrap.appendChild(box);
-        return wrap;
+      function tagsOf(s) {
+        const arr = [
+          '9990',
+          s.year,
+          SESSION_LABELS[s.session] || s.session,
+          'Paper ' + (s.paper_no || 1),
+          'Variant ' + s.variant,
+          'Q' + s.q_no,
+        ];
+        if (s.part) arr.push(s.part);
+        return arr;
       }
 
-      function onTopicChange(id) {
-        const row = body.querySelector(`tr[data-id="${id}"]`);
-        const checked = Array.from(row.querySelectorAll('.study-chk input:checked')).map((c) => c.value);
-        edits[id] = edits[id] || { topics: [...ORIG[id].topics], type: ORIG[id].type };
-        edits[id].topics = checked;
-        markChanged(id);
+      // 数组感知的相等比较
+      function snapEq(a, b) {
+        const keys = ['text', 'stem_text', 'topics', 'type_facet', 'command_words', 'marks', 'year', 'session', 'paper_no', 'variant', 'q_no', 'part'];
+        return keys.every((k) => {
+          if (k === 'topics' || k === 'command_words') {
+            const x = a[k] || [], y = b[k] || [];
+            return x.length === y.length && x.every((v, i) => v === y[i]);
+          }
+          return (a[k] ?? '') === (b[k] ?? '');
+        });
       }
 
-      function markChanged(id) {
-        // 判断是否真改动
-        const e = edits[id];
-        const o = ORIG[id];
-        const sameTopics = e.topics.length === o.topics.length && e.topics.every((t) => o.topics.includes(t));
-        const sameType = e.type === o.type;
-        if (sameTopics && sameType) delete edits[id];
-        renderRow(DATA.find((q) => q.id === id));
+      function setField(id, field, value) {
+        if (!edits[id]) edits[id] = { ...ORIG[id] };
+        edits[id][field] = value;
+        if (snapEq(edits[id], ORIG[id])) delete edits[id];
+        refreshRow(DATA.find((q) => q.id === id));
         updateSummary();
       }
 
-      function renderRow(q) {
-        const old = body.querySelector(`tr[data-id="${q.id}"]`);
-        const oldDetail = body.querySelector(`tr.detail-row[data-did="${q.id}"]`);
-        if (old) old.remove();
-        if (oldDetail) oldDetail.remove();
-
-        const tr = document.createElement('tr');
-        tr.dataset.id = q.id;
-        const isOpen = q._open;
+      // 就地刷新主行单元格（不重排顺序）
+      function refreshRow(q) {
+        const tr = body.querySelector(`tr[data-id="${q.id}"]`);
+        if (!tr) return;
+        const s = cur(q.id);
+        tr.querySelector('.cell-tags').innerHTML = tagsOf(s)
+          .map((t) => `<span class="badge bg-gray-100 text-gray-600">${esc(t)}</span>`)
+          .join(' ');
+        tr.querySelector('.cell-text').textContent = s.text || '';
+        tr.querySelector('.cell-topics').innerHTML = (s.topics || [])
+          .map((t) => `<span class="badge bg-emerald-50 text-emerald-700">${esc(topicLabel(t))}</span>`)
+          .join(' ');
+        tr.querySelector('.cell-type').textContent = typeLabel(s.type_facet || 'other');
         const changed = !!edits[q.id];
+        tr.classList.toggle('editing', changed);
+        const dr = body.querySelector(`tr.detail-row[data-did="${q.id}"]`);
+        if (dr) dr.classList.toggle('editing', changed);
+        const flag = tr.querySelector('.changed-flag');
+        if (flag) flag.style.display = changed ? '' : 'none';
+      }
 
-        const tdTags = document.createElement('td');
-        tdTags.innerHTML = q.tags.map((t) => `<span class="badge bg-gray-100 text-gray-600">${t}</span>`).join(' ');
+      // —— 编辑器（首次展开时构建，之后复用）——
+      function buildEditor(q) {
+        const s = cur(q.id);
+        const wrap = document.createElement('div');
+        wrap.className = 'editor';
 
-        const tdText = document.createElement('td');
-        tdText.className = 'admin-text';
-        tdText.textContent = q.text;
+        // 1) 来源字段
+        const srcRow = document.createElement('div');
+        srcRow.className = 'ed-row';
+        srcRow.innerHTML = '<label class="ed-lbl">来源标签 (Source)</label>';
+        const grid = document.createElement('div');
+        grid.className = 'src-grid';
+        const srcFields = [
+          ['year', 'Year', 'number'],
+          ['session', 'Session', 'select', [['m', 'march'], ['s', 'summer'], ['w', 'winter']]],
+          ['paper_no', 'Paper', 'number'],
+          ['variant', 'Variant', 'number'],
+          ['q_no', 'Q no', 'text'],
+          ['part', 'Part', 'text'],
+        ];
+        srcFields.forEach((f) => {
+          const cell = document.createElement('div');
+          const lab = document.createElement('label');
+          lab.className = 'ed-lbl plain';
+          lab.textContent = f[1];
+          let inp;
+          if (f[2] === 'select') {
+            inp = document.createElement('select');
+            f[3].forEach(([v, l]) => {
+              const o = document.createElement('option');
+              o.value = v; o.textContent = l;
+              inp.appendChild(o);
+            });
+          } else {
+            inp = document.createElement('input');
+            inp.type = f[2];
+          }
+          inp.value = s[f[0]] ?? '';
+          inp.addEventListener('input', () =>
+            setField(q.id, f[0], f[2] === 'number' ? (inp.value ? Number(inp.value) : null) : inp.value)
+          );
+          cell.appendChild(lab);
+          cell.appendChild(inp);
+          grid.appendChild(cell);
+        });
+        srcRow.appendChild(grid);
+        wrap.appendChild(srcRow);
 
-        const tdTopics = document.createElement('td');
-        tdTopics.innerHTML = (edits[q.id]?.topics ?? q.topics).map((t) => `<span class="badge bg-emerald-50 text-emerald-700">${topicLabel(t)}</span>`).join(' ');
+        // 2) 题面
+        const tRow = document.createElement('div');
+        tRow.className = 'ed-row';
+        tRow.innerHTML = '<label class="ed-lbl">题面 (Question text)</label>';
+        const ta = document.createElement('textarea');
+        ta.rows = 4;
+        ta.value = s.text || '';
+        ta.addEventListener('input', () => setField(q.id, 'text', ta.value));
+        tRow.appendChild(ta);
+        wrap.appendChild(tRow);
 
-        const tdType = document.createElement('td');
-        tdType.textContent = typeLabel(edits[q.id]?.type ?? q.type);
+        // 3) 大题干（可选）
+        const sRow = document.createElement('div');
+        sRow.className = 'ed-row';
+        sRow.innerHTML = '<label class="ed-lbl">Context / 大题干（可选）</label>';
+        const sa = document.createElement('textarea');
+        sa.rows = 2;
+        sa.value = s.stem_text || '';
+        sa.addEventListener('input', () => setField(q.id, 'stem_text', sa.value));
+        sRow.appendChild(sa);
+        wrap.appendChild(sRow);
 
-        const tdAct = document.createElement('td');
-        const btn = document.createElement('button');
-        btn.className = 'admin-edit-btn';
-        btn.textContent = isOpen ? '收起' : '编辑';
-        btn.addEventListener('click', () => { q._open = !q._open; renderRow(q); });
-        tdAct.appendChild(btn);
-        if (changed) {
-          const flag = document.createElement('div');
-          flag.className = 'changed-flag';
-          flag.textContent = '已改';
-          tdAct.appendChild(flag);
-        }
+        // 4) 知识点 / 视角（可多选）
+        const tpRow = document.createElement('div');
+        tpRow.className = 'ed-row';
+        tpRow.innerHTML = '<label class="ed-lbl">知识点 / 视角（可多选）</label>';
+        groups.forEach((g) => {
+          const gt = document.createElement('div');
+          gt.className = 'grp-title';
+          gt.textContent = g.label;
+          tpRow.appendChild(gt);
+          g.ids.forEach((id) => {
+            const lab = document.createElement('label');
+            lab.className = 'study-chk';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.value = id;
+            cb.checked = (s.topics || []).includes(id);
+            cb.addEventListener('change', () => {
+              const checked = Array.from(tpRow.querySelectorAll('.study-chk input:checked')).map((c) => c.value);
+              setField(q.id, 'topics', checked);
+            });
+            lab.appendChild(cb);
+            lab.appendChild(document.createTextNode(topicLabel(id)));
+            tpRow.appendChild(lab);
+          });
+        });
+        wrap.appendChild(tpRow);
 
-        tr.appendChild(tdTags); tr.appendChild(tdText); tr.appendChild(tdTopics); tr.appendChild(tdType); tr.appendChild(tdAct);
-        body.appendChild(tr);
+        // 5) 研究切面
+        const tyRow = document.createElement('div');
+        tyRow.className = 'ed-row';
+        tyRow.innerHTML = '<label class="ed-lbl">研究切面 (Type)</label>';
+        const sel = document.createElement('select');
+        Object.entries(TYPE_LABELS).forEach(([id, label]) => {
+          const o = document.createElement('option');
+          o.value = id; o.textContent = label;
+          if ((s.type_facet || 'other') === id) o.selected = true;
+          sel.appendChild(o);
+        });
+        sel.addEventListener('change', () => setField(q.id, 'type_facet', sel.value));
+        tyRow.appendChild(sel);
+        wrap.appendChild(tyRow);
 
-        if (isOpen) {
+        // 6) 命令词
+        const cRow = document.createElement('div');
+        cRow.className = 'ed-row';
+        cRow.innerHTML = '<label class="ed-lbl">命令词 (Command words，逗号分隔)</label>';
+        const ci = document.createElement('input');
+        ci.type = 'text';
+        ci.value = (s.command_words || []).join(', ');
+        ci.addEventListener('input', () =>
+          setField(q.id, 'command_words', ci.value.split(',').map((x) => x.trim()).filter(Boolean))
+        );
+        cRow.appendChild(ci);
+        wrap.appendChild(cRow);
+
+        // 7) 分值
+        const mRow = document.createElement('div');
+        mRow.className = 'ed-row';
+        mRow.innerHTML = '<label class="ed-lbl">分值 (Marks)</label>';
+        const mi = document.createElement('input');
+        mi.type = 'number';
+        mi.value = s.marks ?? '';
+        mi.addEventListener('input', () => setField(q.id, 'marks', mi.value ? Number(mi.value) : null));
+        mRow.appendChild(mi);
+        wrap.appendChild(mRow);
+
+        // 8) 操作
+        const act = document.createElement('div');
+        act.className = 'ed-actions';
+        const done = document.createElement('button');
+        done.className = 'save';
+        done.textContent = '完成';
+        done.addEventListener('click', () => {
+          const dr = body.querySelector(`tr.detail-row[data-did="${q.id}"]`);
+          if (dr) dr.hidden = true;
+        });
+        const reset = document.createElement('button');
+        reset.className = 'reset';
+        reset.textContent = '重置本行';
+        reset.addEventListener('click', () => {
+          delete edits[q.id];
+          refreshRow(q);
+          updateSummary();
+          const dr = body.querySelector(`tr.detail-row[data-did="${q.id}"]`);
+          if (dr) {
+            dr.hidden = true;
+            dr.dataset.built = '';
+            dr.innerHTML = '<td colspan="6"></td>';
+          }
+        });
+        act.appendChild(done);
+        act.appendChild(reset);
+        wrap.appendChild(act);
+
+        return wrap;
+      }
+
+      // 构建整张表（主行 + 紧随其后的隐藏详情行），一次性渲染，避免“移到末尾”
+      function buildTable() {
+        DATA.forEach((q) => {
+          const tr = document.createElement('tr');
+          tr.dataset.id = q.id;
+          tr.innerHTML = `
+            <td class="uid-cell">${esc(q.uid)}</td>
+            <td><div class="cell-tags"></div></td>
+            <td class="admin-text cell-text"></td>
+            <td><div class="cell-topics"></div></td>
+            <td class="cell-type"></td>
+            <td>
+              <button class="admin-edit-btn">编辑</button>
+              <div class="changed-flag" style="display:none">已改</div>
+            </td>`;
           const dr = document.createElement('tr');
           dr.className = 'detail-row';
           dr.dataset.did = q.id;
-          dr.appendChild(buildDetail(q));
-          body.appendChild(dr);
-        }
-      }
+          dr.hidden = true;
+          dr.innerHTML = '<td colspan="6"></td>';
 
-      function renderAll() { DATA.forEach(renderRow); updateSummary(); }
+          tr.querySelector('.admin-edit-btn').addEventListener('click', () => {
+            if (dr.hidden) {
+              if (!dr.dataset.built) {
+                dr.appendChild(buildEditor(q));
+                dr.dataset.built = '1';
+              }
+              dr.hidden = false;
+            } else {
+              dr.hidden = true;
+            }
+          });
+
+          body.appendChild(tr);
+          body.appendChild(dr);
+          refreshRow(q);
+        });
+      }
 
       function updateSummary() {
         const ids = Object.keys(edits);
         $('changed-count').textContent = ids.length ? `已改动 ${ids.length} 题` : '';
-        const payload = {
-          edited_at: new Date().toISOString(),
-          edits: edits,
-        };
-        $('json-preview').value = ids.length ? JSON.stringify(payload, null, 2) : '';
+        const payload = ids.length ? buildPayload() : null;
+        $('json-preview').value = payload ? JSON.stringify(payload, null, 2) : '';
+      }
+
+      function buildPayload() {
+        const out = {};
+        for (const id of Object.keys(edits)) {
+          const e = edits[id];
+          out[id] = {
+            uid: ORIG[id] ? DATA.find((d) => d.id === id)?.uid : undefined,
+            text: e.text,
+            stem_text: e.stem_text,
+            topics: e.topics,
+            type_facet: e.type_facet,
+            command_words: e.command_words,
+            marks: e.marks,
+            series: { year: e.year, session: e.session },
+            paper: { no: e.paper_no, variant: e.variant },
+            q_no: e.q_no,
+            part: e.part || null,
+          };
+        }
+        return { edited_at: new Date().toISOString(), edits: out };
       }
 
       // 筛选
       $('adm-search').addEventListener('input', (e) => {
         const q = e.target.value.trim().toLowerCase();
-        DATA.forEach((d) => { d._hide = q && !(d.id.toLowerCase().includes(q) || d.text.toLowerCase().includes(q)); });
+        DATA.forEach((d) => {
+          d._hide = q && !(d.uid.toLowerCase().includes(q) || d.id.toLowerCase().includes(q) || d.text.toLowerCase().includes(q));
+        });
         body.querySelectorAll('tr[data-id]').forEach((tr) => {
-          const id = tr.dataset.id;
-          const d = DATA.find((x) => x.id === id);
+          const d = DATA.find((x) => x.id === tr.dataset.id);
           tr.style.display = d._hide ? 'none' : '';
-          const dr = body.querySelector(`tr.detail-row[data-did="${id}"]`);
+          const dr = body.querySelector(`tr.detail-row[data-did="${d.id}"]`);
           if (dr) dr.style.display = d._hide ? 'none' : '';
         });
       });
 
-      $('btn-expand').addEventListener('click', () => { DATA.forEach((d) => (d._open = true)); renderAll(); });
-      $('btn-collapse').addEventListener('click', () => { DATA.forEach((d) => (d._open = false)); renderAll(); });
+      $('btn-expand').addEventListener('click', () => {
+        DATA.forEach((d) => {
+          const dr = body.querySelector(`tr.detail-row[data-did="${d.id}"]`);
+          if (dr && dr.hidden) {
+            if (!dr.dataset.built) {
+              dr.appendChild(buildEditor(d));
+              dr.dataset.built = '1';
+            }
+            dr.hidden = false;
+          }
+        });
+      });
+      $('btn-collapse').addEventListener('click', () => {
+        body.querySelectorAll('tr.detail-row').forEach((dr) => (dr.hidden = true));
+      });
 
       $('btn-export').addEventListener('click', () => {
-        const ids = Object.keys(edits);
-        if (!ids.length) { alert('暂无改动可导出。'); return; }
-        const payload = { edited_at: new Date().toISOString(), edits };
+        const payload = buildPayload();
+        if (!payload) { alert('暂无改动可导出。'); return; }
         const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
@@ -268,7 +450,8 @@ const DATA = questions.map((q) => ({
         catch { $('json-preview').select(); document.execCommand('copy'); alert('已选中，请按 Ctrl/Cmd+C 复制。'); }
       });
 
-      renderAll();
+      buildTable();
+      updateSummary();
     </script>
   </body>
 </html>

@@ -9,13 +9,28 @@ qb-edits.json 格式：
     {
       "edited_at": "2026-08-30T...",
       "edits": {
-        "9990-2024m-12-q1a": {"topics": ["study.baron_cohen"], "type_facet": "sample"},
-        "9990-2024s-11-q3":  {"topics": ["study.milgram", "study.piliavin"]}
+        "9990-2024m-12-q1a": {
+          "uid": "9990_m24_12_Q1a",
+          "text": "...", "stem_text": "...",
+          "topics": ["study.baron_cohen"], "type_facet": "sample",
+          "command_words": ["outline"], "marks": 4,
+          "series": {"year": 2024, "session": "m"},
+          "paper": {"no": 1, "variant": 12},
+          "q_no": "1", "part": "a"
+        }
       }
     }
 
-每个题目的编辑项可包含：topics（实验标签数组）、type_facet（研究切面）、
-command_words（命令词数组）、marks（分值数字）。只更新出现的字段，幂等可重复运行。
+支持编辑的字段：
+  text / stem_text      题面 / 大题干正文
+  topics                知识点（实验或视角标签数组）
+  type_facet            研究切面
+  command_words         命令词数组
+  marks                 分值数字
+  series.year / .session   考年 / 考季(m-s-w)
+  paper.no / .variant      试卷 / variant
+  q_no / part              题号 / 小问
+只更新出现的字段，幂等可重复运行。
 """
 import argparse
 import json
@@ -65,18 +80,28 @@ def apply_edits(edits, data_dir):
                     unmatched.discard(qid)
                     e = edits[qid]
                     modified = False
+                    if isinstance(e.get("text"), str):
+                        q["text"] = e["text"]; modified = True
+                    if isinstance(e.get("stem_text"), str):
+                        q["stem_text"] = e["stem_text"]; modified = True
                     if isinstance(e.get("topics"), list):
-                        q["topics"] = e["topics"]
-                        modified = True
+                        q["topics"] = e["topics"]; modified = True
                     if isinstance(e.get("type_facet"), str):
-                        q["type_facet"] = e["type_facet"]
-                        modified = True
+                        q["type_facet"] = e["type_facet"]; modified = True
                     if isinstance(e.get("command_words"), list):
-                        q["command_words"] = e["command_words"]
-                        modified = True
+                        q["command_words"] = e["command_words"]; modified = True
                     if e.get("marks") is not None:
-                        q["marks"] = e["marks"]
-                        modified = True
+                        q["marks"] = e["marks"]; modified = True
+                    ser = e.get("series")
+                    if isinstance(ser, dict):
+                        if "year" in ser: q["series"]["year"] = ser["year"]; modified = True
+                        if "session" in ser: q["series"]["session"] = ser["session"]; modified = True
+                    pap = e.get("paper")
+                    if isinstance(pap, dict):
+                        if "no" in pap: q["paper"]["no"] = pap["no"]; modified = True
+                        if "variant" in pap: q["paper"]["variant"] = pap["variant"]; modified = True
+                    if "q_no" in e: q["q_no"] = e["q_no"]; modified = True
+                    if "part" in e: q["part"] = e["part"]; modified = True
                     if modified:
                         file_changed += 1
                         changed_total += 1

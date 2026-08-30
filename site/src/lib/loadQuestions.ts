@@ -4,6 +4,7 @@ import { SESSION_LABELS, PAPER_LABELS } from './taxonomy';
 
 export interface Question {
   id: string;
+  uid: string;
   paper: { code: string; no: number; variant: number };
   series: { year: number; session: string; label: string };
   syllabus_version: string;
@@ -28,6 +29,17 @@ export interface Question {
 // 数据即代码：直接读取仓库内 data/questions/*.jsonl（git as database）。
 // 站点在 site/ 下构建，数据在上级 data/questions/。
 const DATA_DIR = path.resolve(process.cwd(), '../data/questions');
+
+// 唯一编号（方便后台定位题目）：9990-2024m-12-q1a -> 9990_m24_12_Q1a
+//   prefix - yyyy{season} - variant - q{part}  ->  prefix _ {season}{YY} _ variant _ Q{part}
+export function uidFromId(id: string): string {
+  const parts = id.split('-');
+  if (parts.length !== 4) return id;
+  const [prefix, ym, variant, q] = parts;
+  const year = ym.slice(0, 4);
+  const season = ym.slice(4); // m / s / w
+  return `${prefix}_${season}${year.slice(2)}_${variant}_${q.toUpperCase()}`;
+}
 
 // 轻量清洗：去掉点阵填空行、页码、UCLES 页脚等噪声，保留原题正文。
 function cleanText(s: string): string {
@@ -54,6 +66,7 @@ function loadAll(): Question[] {
       try {
         const q = JSON.parse(t) as Question;
         q.text = cleanText(q.text || '');
+        q.uid = uidFromId(q.id);
         out.push(q);
       } catch {
         /* skip malformed line */

@@ -44,9 +44,13 @@ const hasRealStem = (q: (typeof questions)[number]) => {
   </head>
   <body class="bg-gray-50 text-gray-800">
     <!-- 顶部 -->
-    <header class="bg-indigo-700 text-white">
-      <div class="max-w-6xl mx-auto px-4 py-6">
-        <h1 class="text-2xl font-bold">CIE A-Level Psychology 9990</h1>
+    <header class="site-header">
+      <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <span class="brand-mark">9990</span>
+          <h1 class="text-lg sm:text-xl truncate">CIE A-Level Psychology 9990</h1>
+        </div>
+        <a href="admin" class="header-link">校对后台</a>
       </div>
     </header>
 
@@ -130,7 +134,7 @@ const hasRealStem = (q: (typeof questions)[number]) => {
         </button>
 
         <div class="text-xs text-gray-500 self-center">
-          匹配到 <span id="result-count" class="font-semibold text-indigo-700">{questions.length}</span> 题
+          匹配到 <span id="result-count" class="font-semibold text-theme-dark">{questions.length}</span> 题
         </div>
       </div>
     </div>
@@ -156,6 +160,7 @@ const hasRealStem = (q: (typeof questions)[number]) => {
               ))}
               {q.marks != null && <span class="badge bg-amber-50 text-amber-700">[{q.marks}]</span>}
               {q.has_figure && <span class="badge bg-rose-50 text-rose-700">含图</span>}
+              <span class="q-uid ml-auto">№ {q.uid}</span>
             </div>
 
             {hasRealStem(q) && (
@@ -185,10 +190,10 @@ const hasRealStem = (q: (typeof questions)[number]) => {
       </p>
     </main>
 
-    <footer class="max-w-6xl mx-auto px-4 py-8 text-center text-xs text-gray-400">
-      题目整理自历年真题 PDF · 按 2024–2026 考纲 ·
-      <a href="admin" class="underline hover:text-indigo-600">题库校对后台</a>
-    </footer>
+      <footer class="max-w-6xl mx-auto px-4 py-8 text-center text-xs text-gray-400">
+        题目整理自历年真题 PDF · 按 2024–2026 考纲 ·
+        <a href="admin" class="underline hover:text-theme">题库校对后台</a>
+      </footer>
 
     <script define:vars={{ TOPICS_BY_PAPER, TOPIC_LABELS }}>
       const $ = (id) => document.getElementById(id);

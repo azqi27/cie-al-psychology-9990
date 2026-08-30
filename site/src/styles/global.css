@@ -1,6 +1,14 @@
 @import "tailwindcss";
 
-:root { color-scheme: light; }
+/* ===== 主题色（用户指定 #7596BF）===== */
+:root {
+  color-scheme: light;
+  --theme: #7596BF;
+  --theme-dark: #2f4a63;
+  --theme-tint: #eef3f9;
+  --theme-tint2: #e3ebf4;
+  --theme-hover: #5f7fa8;
+}
 
 html { scroll-behavior: smooth; }
 
@@ -8,11 +16,25 @@ body {
   font-family: system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
 }
 
+/* 小工具类（替代原先的 indigo 系列） */
+.text-theme { color: var(--theme); }
+.bg-theme { background-color: var(--theme); }
+.border-theme { border-color: var(--theme); }
+.hover-bg-theme:hover { background-color: var(--theme-hover); }
+
 /* 原题英文需保留换行（full-text 模式） */
 .qtext {
   white-space: pre-wrap;
   word-break: break-word;
   line-height: 1.55;
+}
+
+/* 唯一编号（uid）：卡片右上角小字，便于后台定位 */
+.q-uid {
+  font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 0.68rem;
+  color: var(--theme-dark);
+  letter-spacing: 0.01em;
 }
 
 /* 筛选后的卡片隐藏 */
@@ -29,16 +51,16 @@ body {
   line-height: 1.2;
 }
 
-/* 大题干（Context）：淡靛蓝背景 + 左侧色条，比原先细边框更清晰美观 */
+/* 大题干（Context）：主题色左侧色条 + 浅 tint 背景 */
 .stem-box {
   position: relative;
-  border-left: 4px solid #6366f1;
-  background: #eef2ff;
+  border-left: 4px solid var(--theme);
+  background: var(--theme-tint);
   border-radius: 0 8px 8px 0;
   padding: 0.55rem 0.85rem;
   font-size: 0.85rem;
   line-height: 1.5;
-  color: #3730a3;
+  color: var(--theme-dark);
   font-style: italic;
 }
 .stem-cap {
@@ -46,22 +68,82 @@ body {
   font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: #6366f1;
+  color: var(--theme);
   font-style: normal;
   font-weight: 700;
   margin-bottom: 0.2rem;
 }
 
-/* —— 题库校对后台（admin）样式 —— */
+/* ===== 页眉（更紧凑、更精致）===== */
+.site-header {
+  background: var(--theme);
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(47, 74, 99, 0.18);
+}
+.site-header .brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 7px;
+  padding: 0.18rem 0.5rem;
+  line-height: 1;
+}
+.site-header h1 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+.site-header .header-link {
+  font-size: 0.8rem;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  padding: 0.28rem 0.75rem;
+  white-space: nowrap;
+  transition: background 0.15s ease;
+}
+.site-header .header-link:hover { background: rgba(255, 255, 255, 0.28); }
+
+/* ===== 题库校对后台（admin）样式 ===== */
 .admin-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 .admin-table th, .admin-table td { border: 1px solid #e5e7eb; padding: 0.5rem 0.6rem; vertical-align: top; text-align: left; }
-.admin-table th { background: #f8fafc; font-weight: 600; color: #475569; position: sticky; top: 0; }
-.admin-table tr:nth-child(even) td { background: #fafafa; }
+.admin-table th { background: #f8fafc; font-weight: 600; color: #475569; position: sticky; top: 0; z-index: 1; }
+.admin-table tr:nth-child(4n+1) td, .admin-table tr:nth-child(4n+2) td { background: #fafafa; }
 .admin-text { max-width: 32rem; white-space: pre-wrap; word-break: break-word; line-height: 1.45; }
 .study-chk { display: inline-flex; align-items: center; gap: 0.3rem; margin: 0.1rem 0.6rem 0.1rem 0; font-size: 0.78rem; }
-.study-chk input { accent-color: #4f46e5; }
-.detail-row td { background: #f5f3ff !important; }
+.study-chk input { accent-color: var(--theme); }
+.detail-row td { background: var(--theme-tint) !important; padding: 0 !important; }
+/* 编辑中高亮：主体行 + 详情行 */
+tr.editing > td { background: var(--theme-tint2) !important; box-shadow: inset 4px 0 0 var(--theme); }
+tr.detail-row.editing > td { background: var(--theme-tint) !important; }
 .changed-flag { color: #16a34a; font-weight: 600; font-size: 0.72rem; }
-.admin-edit-btn { font-size: 0.72rem; padding: 0.15rem 0.5rem; border: 1px solid #c7d2fe; border-radius: 6px; background: #eef2ff; color: #4338ca; cursor: pointer; }
-.admin-edit-btn:hover { background: #e0e7ff; }
+.admin-edit-btn {
+  font-size: 0.72rem; padding: 0.15rem 0.6rem; border-radius: 6px;
+  border: 1px solid var(--theme-tint2); background: var(--theme-tint); color: var(--theme-dark);
+  cursor: pointer;
+}
+.admin-edit-btn:hover { background: var(--theme-tint2); }
+/* 编辑器内部布局 */
+.editor { padding: 0.75rem 0.9rem; display: grid; gap: 0.7rem; }
+.editor .ed-row { display: grid; gap: 0.3rem; }
+.editor label.ed-lbl { font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.04em; }
+.editor label.ed-lbl.plain { text-transform: none; letter-spacing: 0; font-weight: 600; font-size: 0.74rem; }
+.editor input[type="text"], .editor input[type="number"], .editor textarea, .editor select {
+  border: 1px solid #cbd5e1; border-radius: 7px; padding: 0.35rem 0.5rem; font-size: 0.82rem; width: 100%;
+  font-family: inherit;
+}
+.editor textarea { line-height: 1.5; resize: vertical; }
+.editor .src-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); gap: 0.5rem; }
+.editor .grp-title { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--theme); font-weight: 700; margin-top: 0.2rem; }
+.editor .ed-actions { display: flex; gap: 0.5rem; align-items: center; }
+.editor .ed-actions .save { background: var(--theme); color: #fff; border: none; border-radius: 7px; padding: 0.35rem 0.9rem; cursor: pointer; font-size: 0.8rem; }
+.editor .ed-actions .save:hover { background: var(--theme-hover); }
+.editor .ed-actions .reset { background: #fff; border: 1px solid #cbd5e1; border-radius: 7px; padding: 0.35rem 0.9rem; cursor: pointer; font-size: 0.8rem; }
 textarea#json-preview { width: 100%; height: 10rem; font-family: ui-monospace, monospace; font-size: 0.72rem; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.5rem; }
+.uid-cell { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.72rem; color: var(--theme-dark); white-space: nowrap; }

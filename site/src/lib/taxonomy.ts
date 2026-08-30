@@ -19,6 +19,11 @@ export const TOPIC_LABELS: Record<string, string> = {
   'study.milgram': 'Milgram (obedience)',
   'study.perry': 'Perry et al. (personal space)',
   'study.piliavin': 'Piliavin et al. (subway Samaritan)',
+  // —— 四个视角（approach）：仅问视角层面（如 assumption of approach）的题目关联到此处，不绑定具体实验 ——
+  'approach.biological': 'Biological approach',
+  'approach.cognitive': 'Cognitive approach',
+  'approach.learning': 'Learning approach',
+  'approach.social': 'Social approach',
   // —— P2 方法/概念（供宏观 Paper 筛选未来扩展；当前无数据）——
   'method.experiment': 'Experiments',
   'method.self_report': 'Self-reports',
@@ -45,6 +50,14 @@ export const STUDIES_BY_APPROACH: Record<string, string[]> = {
   learning: ['study.bandura', 'study.fagen', 'study.saavedra_silverman'],
   social: ['study.milgram', 'study.perry', 'study.piliavin'],
 };
+
+// 四个视角标签（仅问视角层面的题目使用，不绑定具体实验）
+export const APPROACH_TAGS: string[] = [
+  'approach.biological',
+  'approach.cognitive',
+  'approach.learning',
+  'approach.social',
+];
 
 // 研究切面（题型）英文
 export const TYPE_LABELS: Record<string, string> = {
@@ -92,12 +105,13 @@ export const PAPER_LABELS: Record<number, string> = {
   4: 'Paper 4',
 };
 
-// 知识点下拉分组（顺序即展示顺序）；仅含 12 实验，按视角分组
+// 知识点下拉分组（顺序即展示顺序）；12 实验按视角分组 + 4 个视角(approach)选项
 export const TOPIC_GROUPS: { label: string; ids: string[] }[] = [
   { label: 'Biological', ids: STUDIES_BY_APPROACH.biological },
   { label: 'Cognitive', ids: STUDIES_BY_APPROACH.cognitive },
   { label: 'Learning', ids: STUDIES_BY_APPROACH.learning },
   { label: 'Social', ids: STUDIES_BY_APPROACH.social },
+  { label: 'Approaches (视角)', ids: APPROACH_TAGS },
 ];
 
 // P2 方法 / 概念分组（未来扩展）
