@@ -294,13 +294,13 @@ const BASE_URL = import.meta.env.BASE_URL;
       function b64(s) { return btoa(unescape(encodeURIComponent(s))); }
       async function ghGet(path) {
         const token = tokenInput.value.trim();
-        const r = await fetch(`${API}${path}`, { headers: { Authorization: 'token ' + token, Accept: 'application/vnd.github+json' } });
+        const r = await fetch(`${API}${path}`, { headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json' } });
         if (!r.ok) throw new Error(`GET ${path} -> ${r.status}`);
         return r.json();
       }
       async function ghPut(path, content, sha, message) {
         const token = tokenInput.value.trim();
-        const r = await fetch(`${API}${path}`, { method: 'PUT', headers: { Authorization: 'token ' + token, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' }, body: JSON.stringify({ message, content: b64(content), sha }) });
+        const r = await fetch(`${API}${path}`, { method: 'PUT', headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' }, body: JSON.stringify({ message, content: b64(content), sha }) });
         if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(`PUT ${path} -> ${r.status} ${e.message || ''}`); }
         return true;
       }
