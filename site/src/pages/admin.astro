@@ -25,9 +25,9 @@ const BASE_URL = import.meta.env.BASE_URL;
   </head>
   <body class="bg-gray-50 text-gray-800">
     <header class="site-header">
-      <div class="max-w-7xl mx-auto px-4 py-4">
+      <div class="max-w-5xl mx-auto px-4 py-4">
         <h1>CIE A-Level Psychology 9990</h1>
-        <p class="site-sub">by Angel Zhang</p>
+        <p class="site-sub">by Angel Zhang · <span class="adm-ver">后台 v2（卡片式重写）</span></p>
       </div>
     </header>
 
@@ -51,16 +51,16 @@ const BASE_URL = import.meta.env.BASE_URL;
       </div>
     </div>
 
-    <main class="max-w-7xl mx-auto px-4 py-5">
+    <main class="max-w-5xl mx-auto px-4 py-5">
       <div id="loading" class="text-center text-gray-400 text-sm py-10">正在加载题库…</div>
 
       <div id="app" class="hidden">
         <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-900">
           <strong>如何使用：</strong>
-          点任意题目的 <em>编辑</em>，编辑器会在该题<strong>下方</strong>就地展开；正在编辑的行会高亮。
-          可修改任意字段：来源标签、题面、大题干、对应实验/视角（可多选）、研究切面、命令词、分值。
-          改完后点 <em>发布到网站</em> 即可把改动<strong>永久写入题库并即时更新线上</strong>（需填写下方 GitHub Token）。
-          也可点 <em>导出 JSON</em> 把改动下载下来发给我人工处理。
+          每道题是一张<strong>卡片</strong>。点卡片上的 <em>编辑</em>，编辑器会<strong>在该卡片内部、题面正下方</strong>就地展开（绝不在右侧）。
+          可改任意字段：来源标签、题面、大题干、对应实验/视角（可多选）、研究切面、命令词、分值。
+          改完点 <em>发布到网站</em> 即可把改动<strong>永久写入题库并即时更新线上</strong>（右上角填 GitHub Token）。
+          也可 <em>导出 JSON</em> 下载发给我人工处理。
         </div>
 
         <div class="flex flex-wrap gap-2 items-center mb-3">
@@ -75,7 +75,7 @@ const BASE_URL = import.meta.env.BASE_URL;
           <span class="grow"></span>
           <label class="flex items-center gap-1 text-xs text-gray-600">
             GitHub Token
-            <input id="gh-token" type="password" placeholder="粘贴你的 PAT（repo 权限）" class="border rounded px-2 py-1.5 text-sm w-56" />
+            <input id="gh-token" type="password" placeholder="粘贴 fine-grained PAT（repo 权限）" class="border rounded px-2 py-1.5 text-sm w-56" />
           </label>
           <button id="btn-publish" class="text-sm px-3 py-1.5 rounded bg-emerald-600 text-white hover:bg-emerald-700">发布到网站</button>
           <button id="btn-export" class="text-sm px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 border border-gray-300">导出 JSON</button>
@@ -84,21 +84,7 @@ const BASE_URL = import.meta.env.BASE_URL;
         </div>
         <p id="save-status" class="hidden text-sm text-emerald-700 font-semibold -mt-2 mb-3"></p>
 
-        <div class="overflow-auto border rounded-lg bg-white">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th style="width:9%">编号</th>
-                <th style="width:17%">来源</th>
-                <th style="width:32%">题面</th>
-                <th style="width:20%">知识点 / 视角</th>
-                <th style="width:10%">研究切面</th>
-                <th style="width:12%">操作</th>
-              </tr>
-            </thead>
-            <tbody id="adm-body"></tbody>
-          </table>
-        </div>
+        <div id="list"></div>
 
         <div class="mt-4">
           <p class="text-xs text-gray-500 mb-1">导出预览（仅含已改动题目）：</p>
@@ -107,12 +93,64 @@ const BASE_URL = import.meta.env.BASE_URL;
       </div>
     </main>
 
+    <style is:global>
+      .adm-ver { font-size: 0.7rem; opacity: 0.9; }
+      #list { display: flex; flex-direction: column; gap: 0.7rem; }
+      .adm-card {
+        background: #fff;
+        border: 1px solid #e6ebf1;
+        border-left: 4px solid var(--theme);
+        border-radius: 12px;
+        padding: 0.8rem 1rem;
+        box-shadow: 0 1px 2px rgba(47, 74, 99, 0.06);
+      }
+      .adm-card.editing {
+        background: #f3f8ff;
+        box-shadow: inset 4px 0 0 var(--theme);
+      }
+      .adm-card-head { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+      .adm-uid { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 0.7rem; color: var(--theme-dark); white-space: nowrap; }
+      .adm-src { display: flex; flex-wrap: wrap; gap: 0.25rem; flex: 1 1 auto; }
+      .adm-card-body { margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.4rem; }
+      .adm-text { font-weight: 600; color: #1f2937; font-size: 0.92rem; line-height: 1.55; white-space: pre-line; word-break: break-word; }
+      .adm-topics { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+      .adm-editor-slot { margin-top: 0.7rem; }
+      .adm-changed { color: #16a34a; font-weight: 600; font-size: 0.72rem; }
+      .adm-edit-btn {
+        font-size: 0.72rem; padding: 0.18rem 0.7rem; border-radius: 6px;
+        border: 1px solid var(--theme-tint2); background: var(--theme-tint); color: var(--theme-dark);
+        cursor: pointer;
+      }
+      .adm-edit-btn:hover { background: var(--theme-tint2); }
+
+      /* 编辑器（在卡片内、题面下方，整宽块） */
+      .editor { padding: 0.75rem 0.9rem; background: var(--theme-tint); border-radius: 10px; display: grid; gap: 0.7rem; }
+      .editor .ed-head { font-size: 0.74rem; color: var(--theme-dark); font-weight: 700; display: flex; align-items: center; gap: 0.4rem; }
+      .editing-pill { display: inline-block; background: var(--theme); color: #fff; font-size: 0.62rem; padding: 0.05rem 0.45rem; border-radius: 9999px; font-weight: 700; }
+      .mono { font-family: ui-monospace, Menlo, Consolas, monospace; }
+      .editor .ed-row { display: grid; gap: 0.3rem; }
+      .editor label.ed-lbl { font-size: 0.72rem; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.04em; }
+      .editor label.ed-lbl.plain { text-transform: none; letter-spacing: 0; font-weight: 600; font-size: 0.74rem; }
+      .editor input[type="text"], .editor input[type="number"], .editor textarea, .editor select {
+        border: 1px solid #cbd5e1; border-radius: 7px; padding: 0.35rem 0.5rem; font-size: 0.82rem; width: 100%; font-family: inherit;
+      }
+      .editor textarea { line-height: 1.5; resize: vertical; }
+      .editor .src-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); gap: 0.5rem; }
+      .editor .grp-title { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--theme); font-weight: 700; margin-top: 0.2rem; }
+      .editor .study-chk { display: inline-flex; align-items: center; gap: 0.3rem; margin: 0.1rem 0.6rem 0.1rem 0; font-size: 0.78rem; }
+      .editor .study-chk input { accent-color: var(--theme); }
+      .editor .ed-actions { display: flex; gap: 0.5rem; align-items: center; }
+      .editor .ed-actions .save { background: var(--theme); color: #fff; border: none; border-radius: 7px; padding: 0.35rem 0.9rem; cursor: pointer; font-size: 0.8rem; }
+      .editor .ed-actions .save:hover { background: var(--theme-hover); }
+      .editor .ed-actions .reset { background: #fff; border: 1px solid #cbd5e1; border-radius: 7px; padding: 0.35rem 0.9rem; cursor: pointer; font-size: 0.8rem; }
+    </style>
+
     <script define:vars={{ TOPICS_BY_PAPER, TOPIC_LABELS, TYPE_LABELS, CMD_LABELS, SESSION_LABELS, PAPER_LABELS, BASE_URL }}>
       const $ = (id) => document.getElementById(id);
       const BASE = BASE_URL.endsWith('/') ? BASE_URL : BASE_URL + '/';
       const REPO = 'azqi27/cie-al-psychology-9990';
       const API = 'https://api.github.com';
-      const body = $('adm-body');
+      const list = $('list');
       const groups = TOPICS_BY_PAPER[1] || [];
       const STORAGE_KEY = 'qb-edits-cie-al-psychology-9990';
       const TOKEN_KEY = 'gh-token-cie-al-psychology-9990';
@@ -158,23 +196,20 @@ const BASE_URL = import.meta.env.BASE_URL;
         if (!edits[id]) edits[id] = { ...ORIG[id] };
         edits[id][field] = value;
         if (snapEq(edits[id], ORIG[id])) delete edits[id];
-        refreshRow(DATA.find((q) => q.id === id));
+        refreshCard(DATA.find((q) => q.id === id));
         updateSummary();
       }
 
-      function refreshRow(q) {
-        const tr = body.querySelector(`tr[data-id="${q.id}"]`);
-        if (!tr) return;
+      function refreshCard(q) {
+        const card = list.querySelector(`article.adm-card[data-id="${q.id}"]`);
+        if (!card) return;
         const s = cur(q.id);
-        tr.querySelector('.cell-tags').innerHTML = (s.tags || []).filter((t) => t !== '').map((t) => `<span class="badge bg-gray-100 text-gray-600">${esc(t)}</span>`).join(' ');
-        tr.querySelector('.cell-text').textContent = s.text || '';
-        tr.querySelector('.cell-topics').innerHTML = (s.topics || []).map((t) => `<span class="badge bg-emerald-50 text-emerald-700">${esc(topicLabel(t))}</span>`).join(' ');
-        tr.querySelector('.cell-type').textContent = typeLabel(s.type_facet || 'other');
+        card.querySelector('.adm-text').textContent = s.text || '';
+        card.querySelector('.adm-topics').innerHTML = (s.topics || []).map((t) => `<span class="badge bg-emerald-50 text-emerald-700">${esc(topicLabel(t))}</span>`).join(' ');
+        card.querySelector('.adm-src').innerHTML = (s.tags || []).filter((t) => t !== '').map((t) => `<span class="badge bg-gray-100 text-gray-600">${esc(t)}</span>`).join(' ');
         const changed = !!edits[q.id];
-        tr.classList.toggle('editing', changed);
-        const dr = body.querySelector(`tr.detail-row[data-did="${q.id}"]`);
-        if (dr) dr.classList.toggle('editing', changed);
-        const flag = tr.querySelector('.changed-flag');
+        card.classList.toggle('editing', changed);
+        const flag = card.querySelector('.adm-changed');
         if (flag) flag.style.display = changed ? '' : 'none';
       }
 
@@ -184,7 +219,8 @@ const BASE_URL = import.meta.env.BASE_URL;
         wrap.className = 'editor';
         wrap.innerHTML = `<div class="ed-head">正在编辑：<span class="mono">${esc(s.uid)}</span> <span class="editing-pill">编辑中</span></div>`;
 
-        const srcRow = document.createElement('div'); srcRow.className = 'ed-row';
+        const srcRow = document.createElement('div');
+        srcRow.className = 'ed-row';
         srcRow.innerHTML = '<label class="ed-lbl">来源标签 (Source)</label>';
         const grid = document.createElement('div'); grid.className = 'src-grid';
         const srcFields = [['year', 'Year', 'number'], ['session', 'Session', 'select', [['m', 'march'], ['s', 'summer'], ['w', 'winter']]], ['paper_no', 'Paper', 'number'], ['variant', 'Variant', 'number'], ['q_no', 'Q no', 'text'], ['part', 'Part', 'text']];
@@ -246,32 +282,39 @@ const BASE_URL = import.meta.env.BASE_URL;
 
         const act = document.createElement('div'); act.className = 'ed-actions';
         const done = document.createElement('button'); done.className = 'save'; done.textContent = '完成';
-        done.addEventListener('click', () => { const dr = body.querySelector(`tr.detail-row[data-did="${q.id}"]`); if (dr) dr.hidden = true; });
+        done.addEventListener('click', () => { const slot = list.querySelector(`article.adm-card[data-id="${q.id}"] .adm-editor-slot`); if (slot) slot.hidden = true; });
         const reset = document.createElement('button'); reset.className = 'reset'; reset.textContent = '重置本行';
-        reset.addEventListener('click', () => { delete edits[q.id]; refreshRow(q); updateSummary(); const dr = body.querySelector(`tr.detail-row[data-did="${q.id}"]`); if (dr) { dr.hidden = true; dr.dataset.built = ''; dr.innerHTML = '<td colspan="6"></td>'; } });
+        reset.addEventListener('click', () => { delete edits[q.id]; refreshCard(q); updateSummary(); const slot = list.querySelector(`article.adm-card[data-id="${q.id}"] .adm-editor-slot`); if (slot) { slot.hidden = true; slot.dataset.built = ''; slot.innerHTML = ''; } });
         act.appendChild(done); act.appendChild(reset); wrap.appendChild(act);
         return wrap;
       }
 
-      function buildTable() {
+      function buildList() {
         DATA.forEach((q) => {
-          const tr = document.createElement('tr'); tr.dataset.id = q.id;
-          tr.innerHTML = `
-            <td class="uid-cell">${esc(q.uid)}</td>
-            <td><div class="cell-tags"></div></td>
-            <td class="admin-text cell-text"></td>
-            <td><div class="cell-topics"></div></td>
-            <td class="cell-type"></td>
-            <td>
-              <button class="admin-edit-btn">编辑</button>
-              <div class="changed-flag" style="display:none">已改</div>
-            </td>`;
-          const dr = document.createElement('tr'); dr.className = 'detail-row'; dr.dataset.did = q.id; dr.hidden = true; dr.innerHTML = '<td colspan="6"></td>';
-          tr.querySelector('.admin-edit-btn').addEventListener('click', () => {
-            if (dr.hidden) { if (!dr.dataset.built) { dr.appendChild(buildEditor(q)); dr.dataset.built = '1'; } dr.hidden = false; }
-            else dr.hidden = true;
+          const card = document.createElement('article');
+          card.className = 'adm-card';
+          card.dataset.id = q.id;
+          card.innerHTML = `
+            <div class="adm-card-head">
+              <span class="adm-uid mono">${esc(q.uid)}</span>
+              <span class="adm-src"></span>
+              <button class="adm-edit-btn">编辑</button>
+              <span class="adm-changed" style="display:none">已改</span>
+            </div>
+            <div class="adm-card-body">
+              <div class="adm-text"></div>
+              <div class="adm-topics"></div>
+            </div>
+            <div class="adm-editor-slot" hidden></div>`;
+          const slot = card.querySelector('.adm-editor-slot');
+          card.querySelector('.adm-edit-btn').addEventListener('click', () => {
+            if (slot.hidden) {
+              if (!slot.dataset.built) { slot.appendChild(buildEditor(q)); slot.dataset.built = '1'; }
+              slot.hidden = false;
+            } else slot.hidden = true;
           });
-          body.appendChild(tr); body.appendChild(dr); refreshRow(q);
+          list.appendChild(card);
+          refreshCard(q);
         });
       }
 
@@ -290,7 +333,7 @@ const BASE_URL = import.meta.env.BASE_URL;
         return { edited_at: new Date().toISOString(), edits: out };
       }
 
-      // —— GitHub 永久发布 ——
+      // —— GitHub 永久发布（Bearer，兼容 fine-grained）——
       function b64(s) { return btoa(unescape(encodeURIComponent(s))); }
       async function ghGet(path) {
         const token = tokenInput.value.trim();
@@ -309,16 +352,14 @@ const BASE_URL = import.meta.env.BASE_URL;
         const ids = Object.keys(edits);
         if (!ids.length) { alert('暂无改动可发布。'); return; }
         const token = tokenInput.value.trim();
-        if (!token) { alert('请先在右上角填写 GitHub Token（需要 repo 权限）。'); tokenInput.focus(); return; }
+        if (!token) { alert('请先在右上角填写 GitHub Token（fine-grained，需 Contents 权限）。'); tokenInput.focus(); return; }
         if (!confirm(`确定把 ${ids.length} 题的改动永久发布到网站吗？`)) return;
         const status = $('save-status'); status.classList.remove('hidden'); status.style.color = '#2f4a63'; status.textContent = '正在发布…';
         try {
-          // 1) 更新 gh-pages 的 data/questions.json（线上即时生效）
           const remote = DATA.map((q) => (edits[q.id] ? edits[q.id] : q));
           const live = await ghGet(`/repos/${REPO}/contents/data/questions.json?ref=gh-pages`);
           await ghPut(`/repos/${REPO}/contents/data/questions.json`, JSON.stringify(remote), live.sha, `Update questions via admin (${ids.length} edits)`);
 
-          // 2) 回写 main 的 JSONL 源文件（保持单一真相源 / 历史）
           const byFile = {};
           for (const id of ids) { const f = ORIG[id].file; (byFile[f] = byFile[f] || new Set()).add(id); }
           for (const file of Object.keys(byFile)) {
@@ -332,8 +373,7 @@ const BASE_URL = import.meta.env.BASE_URL;
             await ghPut(`/repos/${REPO}/contents/data/questions/${file}`, updated.join('\n') + '\n', gj.sha, `Update ${file} via admin`);
           }
 
-          // 发布成功后，把改动并入原始快照，清除编辑态
-          ids.forEach((id) => { ORIG[id] = { ...ORIG[id], ...edits[id] }; delete edits[id]; refreshRow(DATA.find((q) => q.id === id)); });
+          ids.forEach((id) => { ORIG[id] = { ...ORIG[id], ...edits[id] }; delete edits[id]; refreshCard(DATA.find((q) => q.id === id)); });
           updateSummary();
           status.style.color = '#16a34a';
           status.textContent = `✅ 已永久发布 ${ids.length} 题，线上约 1 分钟后生效。`;
@@ -360,11 +400,16 @@ const BASE_URL = import.meta.env.BASE_URL;
 
       $('adm-search').addEventListener('input', (e) => {
         const q = e.target.value.trim().toLowerCase();
-        DATA.forEach((d) => { d._hide = q && !(d.uid.toLowerCase().includes(q) || d.id.toLowerCase().includes(q) || d.text.toLowerCase().includes(q)); });
-        body.querySelectorAll('tr[data-id]').forEach((tr) => { const d = DATA.find((x) => x.id === tr.dataset.id); const hide = d._hide; tr.style.display = hide ? 'none' : ''; const dr = body.querySelector(`tr.detail-row[data-did="${d.id}"]`); if (dr) dr.style.display = hide ? 'none' : ''; });
+        DATA.forEach((d) => {
+          const hide = q && !(d.uid.toLowerCase().includes(q) || d.id.toLowerCase().includes(q) || d.text.toLowerCase().includes(q));
+          const card = list.querySelector(`article.adm-card[data-id="${d.id}"]`);
+          if (card) card.style.display = hide ? 'none' : '';
+          const slot = card ? card.querySelector('.adm-editor-slot') : null;
+          if (slot) slot.style.display = hide ? 'none' : '';
+        });
       });
-      $('btn-expand').addEventListener('click', () => DATA.forEach((d) => { const dr = body.querySelector(`tr.detail-row[data-did="${d.id}"]`); if (dr && dr.hidden) { if (!dr.dataset.built) { dr.appendChild(buildEditor(d)); dr.dataset.built = '1'; } dr.hidden = false; } }));
-      $('btn-collapse').addEventListener('click', () => body.querySelectorAll('tr.detail-row').forEach((dr) => (dr.hidden = true)));
+      $('btn-expand').addEventListener('click', () => DATA.forEach((d) => { const slot = list.querySelector(`article.adm-card[data-id="${d.id}"] .adm-editor-slot`); if (slot && slot.hidden) { if (!slot.dataset.built) { slot.appendChild(buildEditor(d)); slot.dataset.built = '1'; } slot.hidden = false; } }));
+      $('btn-collapse').addEventListener('click', () => list.querySelectorAll('.adm-editor-slot').forEach((slot) => (slot.hidden = true)));
       $('btn-publish').addEventListener('click', publish);
       $('btn-export').addEventListener('click', exportJSON);
       $('btn-copy').addEventListener('click', copyJSON);
@@ -384,7 +429,7 @@ const BASE_URL = import.meta.env.BASE_URL;
           DATA.forEach((q) => (ORIG[q.id] = { ...q }));
           $('loading').classList.add('hidden');
           $('app').classList.remove('hidden');
-          buildTable();
+          buildList();
           updateSummary();
         } catch (e) {
           $('loading').textContent = '题库加载失败：' + e.message;
