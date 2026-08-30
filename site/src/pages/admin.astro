@@ -1,0 +1,274 @@
+---
+import '../styles/global.css';
+import { questions, effectiveType, sourceTags } from '../lib/loadQuestions';
+import { TOPICS_BY_PAPER, TOPIC_LABELS, TYPE_LABELS } from '../lib/taxonomy';
+
+// 把题库整张表传给前端，作为“可查看、可编辑的数据库”形式。
+const DATA = questions.map((q) => ({
+  id: q.id,
+  tags: sourceTags(q),
+  text: q.text,
+  topics: q.topics,
+  type: effectiveType(q),
+  cmd: q.command_words,
+  marks: q.marks,
+}));
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>题库校对后台 · CIE A-Level Psychology 9990</title>
+    <meta name="description" content="Review and edit question tags for the CIE A-Level Psychology 9990 question bank." />
+  </head>
+  <body class="bg-gray-50 text-gray-800">
+    <header class="bg-indigo-700 text-white">
+      <div class="max-w-7xl mx-auto px-4 py-5">
+        <h1 class="text-xl font-bold">题库校对后台 · CIE A-Level Psychology 9990</h1>
+        <p class="mt-1 text-indigo-100 text-xs">
+          共 {DATA.length} 题 · 勾选每题对应的 12 篇实验并调整“研究切面”，然后导出修改文件。
+        </p>
+      </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-5">
+      <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-900">
+        <strong>如何使用：</strong>
+        在下方表格中展开任意题目，勾选它对应的实验（可多选）、必要时改“研究切面”，改动会标绿。
+        改完后点 <em>导出修改 (JSON)</em> 下载 <code>qb-edits.json</code>。
+        把该文件交给维护脚本（<code>pipeline/apply_edits.py</code>）写回数据并重新发布；或直接把文件发给我，由我帮你应用并部署。
+      </div>
+
+      <div class="flex flex-wrap gap-2 items-center mb-3">
+        <input
+          id="adm-search"
+          type="search"
+          placeholder="按题号或题面筛选…"
+          class="border rounded px-2 py-1.5 text-sm text-gray-800 w-64"
+        />
+        <button id="btn-expand" class="text-sm px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 border border-gray-300">展开全部</button>
+        <button id="btn-collapse" class="text-sm px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 border border-gray-300">收起全部</button>
+        <span class="grow"></span>
+        <button id="btn-export" class="text-sm px-3 py-1.5 rounded bg-indigo-600 text-white hover:bg-indigo-700">导出修改 (JSON)</button>
+        <button id="btn-copy" class="text-sm px-3 py-1.5 rounded bg-gray-100 hover:bg-gray-200 border border-gray-300">复制 JSON</button>
+        <span id="changed-count" class="text-sm text-emerald-700 font-semibold"></span>
+      </div>
+
+      <div class="overflow-auto border rounded-lg bg-white">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th style="width:18%">来源</th>
+              <th style="width:34%">题面</th>
+              <th style="width:20%">当前知识点</th>
+              <th style="width:10%">研究切面</th>
+              <th style="width:8%">操作</th>
+            </tr>
+          </thead>
+          <tbody id="adm-body"></tbody>
+        </table>
+      </div>
+
+      <div class="mt-4">
+        <p class="text-xs text-gray-500 mb-1">导出预览（仅含已改动题目）：</p>
+        <textarea id="json-preview" readonly placeholder="暂无改动"></textarea>
+      </div>
+    </main>
+
+    <script define:vars={{ DATA, TOPICS_BY_PAPER, TOPIC_LABELS, TYPE_LABELS }}>
+      const $ = (id) => document.getElementById(id);
+      // 原始状态（用于判断是否改动）
+      const ORIG = {};
+      DATA.forEach((q) => (ORIG[q.id] = { topics: [...q.topics], type: q.type }));
+      // 编辑状态
+      const edits = {}; // id -> { topics:[], type }
+
+      const body = $('adm-body');
+      const groups = TOPICS_BY_PAPER[1] || []; // 12 篇实验，按视角分组
+
+      function topicLabel(id) { return TOPIC_LABELS[id] ?? id; }
+      function typeLabel(id) { return TYPE_LABELS[id] ?? id; }
+
+      function buildDetail(q) {
+        const cur = edits[q.id] || { topics: [...q.topics], type: q.type };
+        const wrap = document.createElement('td');
+        wrap.colSpan = 5;
+        const box = document.createElement('div');
+        box.className = 'p-2';
+
+        // 实验多选
+        const lab = document.createElement('div');
+        lab.className = 'text-xs font-semibold text-gray-600 mb-1';
+        lab.textContent = '对应实验（可多选）：';
+        box.appendChild(lab);
+
+        groups.forEach((g) => {
+          const grp = document.createElement('div');
+          grp.className = 'mb-1';
+          const gl = document.createElement('div');
+          gl.className = 'text-[10px] uppercase tracking-wide text-gray-400';
+          gl.textContent = g.label;
+          grp.appendChild(gl);
+          g.ids.forEach((id) => {
+            const lab2 = document.createElement('label');
+            lab2.className = 'study-chk';
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.value = id;
+            cb.checked = cur.topics.includes(id);
+            cb.addEventListener('change', () => onTopicChange(q.id));
+            lab2.appendChild(cb);
+            lab2.appendChild(document.createTextNode(topicLabel(id)));
+            grp.appendChild(lab2);
+          });
+          box.appendChild(grp);
+        });
+
+        // 研究切面
+        const fl = document.createElement('div');
+        fl.className = 'text-xs font-semibold text-gray-600 mt-2 mb-1';
+        fl.textContent = '研究切面：';
+        box.appendChild(fl);
+        const sel = document.createElement('select');
+        sel.className = 'border rounded px-2 py-1 text-sm';
+        Object.entries(TYPE_LABELS).forEach(([id, label]) => {
+          const o = document.createElement('option');
+          o.value = id; o.textContent = label;
+          if (id === cur.type) o.selected = true;
+          sel.appendChild(o);
+        });
+        sel.addEventListener('change', () => { edits[q.id] = edits[q.id] || { topics: [...q.topics], type: q.type }; edits[q.id].type = sel.value; markChanged(q.id); });
+        box.appendChild(sel);
+
+        // 重置本行
+        const rst = document.createElement('button');
+        rst.className = 'admin-edit-btn ml-3';
+        rst.textContent = '重置本行';
+        rst.addEventListener('click', () => { delete edits[q.id]; renderRow(q); });
+        box.appendChild(rst);
+
+        wrap.appendChild(box);
+        return wrap;
+      }
+
+      function onTopicChange(id) {
+        const row = body.querySelector(`tr[data-id="${id}"]`);
+        const checked = Array.from(row.querySelectorAll('.study-chk input:checked')).map((c) => c.value);
+        edits[id] = edits[id] || { topics: [...ORIG[id].topics], type: ORIG[id].type };
+        edits[id].topics = checked;
+        markChanged(id);
+      }
+
+      function markChanged(id) {
+        // 判断是否真改动
+        const e = edits[id];
+        const o = ORIG[id];
+        const sameTopics = e.topics.length === o.topics.length && e.topics.every((t) => o.topics.includes(t));
+        const sameType = e.type === o.type;
+        if (sameTopics && sameType) delete edits[id];
+        renderRow(DATA.find((q) => q.id === id));
+        updateSummary();
+      }
+
+      function renderRow(q) {
+        const old = body.querySelector(`tr[data-id="${q.id}"]`);
+        const oldDetail = body.querySelector(`tr.detail-row[data-did="${q.id}"]`);
+        if (old) old.remove();
+        if (oldDetail) oldDetail.remove();
+
+        const tr = document.createElement('tr');
+        tr.dataset.id = q.id;
+        const isOpen = q._open;
+        const changed = !!edits[q.id];
+
+        const tdTags = document.createElement('td');
+        tdTags.innerHTML = q.tags.map((t) => `<span class="badge bg-gray-100 text-gray-600">${t}</span>`).join(' ');
+
+        const tdText = document.createElement('td');
+        tdText.className = 'admin-text';
+        tdText.textContent = q.text;
+
+        const tdTopics = document.createElement('td');
+        tdTopics.innerHTML = (edits[q.id]?.topics ?? q.topics).map((t) => `<span class="badge bg-emerald-50 text-emerald-700">${topicLabel(t)}</span>`).join(' ');
+
+        const tdType = document.createElement('td');
+        tdType.textContent = typeLabel(edits[q.id]?.type ?? q.type);
+
+        const tdAct = document.createElement('td');
+        const btn = document.createElement('button');
+        btn.className = 'admin-edit-btn';
+        btn.textContent = isOpen ? '收起' : '编辑';
+        btn.addEventListener('click', () => { q._open = !q._open; renderRow(q); });
+        tdAct.appendChild(btn);
+        if (changed) {
+          const flag = document.createElement('div');
+          flag.className = 'changed-flag';
+          flag.textContent = '已改';
+          tdAct.appendChild(flag);
+        }
+
+        tr.appendChild(tdTags); tr.appendChild(tdText); tr.appendChild(tdTopics); tr.appendChild(tdType); tr.appendChild(tdAct);
+        body.appendChild(tr);
+
+        if (isOpen) {
+          const dr = document.createElement('tr');
+          dr.className = 'detail-row';
+          dr.dataset.did = q.id;
+          dr.appendChild(buildDetail(q));
+          body.appendChild(dr);
+        }
+      }
+
+      function renderAll() { DATA.forEach(renderRow); updateSummary(); }
+
+      function updateSummary() {
+        const ids = Object.keys(edits);
+        $('changed-count').textContent = ids.length ? `已改动 ${ids.length} 题` : '';
+        const payload = {
+          edited_at: new Date().toISOString(),
+          edits: edits,
+        };
+        $('json-preview').value = ids.length ? JSON.stringify(payload, null, 2) : '';
+      }
+
+      // 筛选
+      $('adm-search').addEventListener('input', (e) => {
+        const q = e.target.value.trim().toLowerCase();
+        DATA.forEach((d) => { d._hide = q && !(d.id.toLowerCase().includes(q) || d.text.toLowerCase().includes(q)); });
+        body.querySelectorAll('tr[data-id]').forEach((tr) => {
+          const id = tr.dataset.id;
+          const d = DATA.find((x) => x.id === id);
+          tr.style.display = d._hide ? 'none' : '';
+          const dr = body.querySelector(`tr.detail-row[data-did="${id}"]`);
+          if (dr) dr.style.display = d._hide ? 'none' : '';
+        });
+      });
+
+      $('btn-expand').addEventListener('click', () => { DATA.forEach((d) => (d._open = true)); renderAll(); });
+      $('btn-collapse').addEventListener('click', () => { DATA.forEach((d) => (d._open = false)); renderAll(); });
+
+      $('btn-export').addEventListener('click', () => {
+        const ids = Object.keys(edits);
+        if (!ids.length) { alert('暂无改动可导出。'); return; }
+        const payload = { edited_at: new Date().toISOString(), edits };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'qb-edits.json';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      });
+
+      $('btn-copy').addEventListener('click', async () => {
+        const val = $('json-preview').value;
+        if (!val) { alert('暂无改动可复制。'); return; }
+        try { await navigator.clipboard.writeText(val); alert('已复制到剪贴板。'); }
+        catch { $('json-preview').select(); document.execCommand('copy'); alert('已选中，请按 Ctrl/Cmd+C 复制。'); }
+      });
+
+      renderAll();
+    </script>
+  </body>
+</html>

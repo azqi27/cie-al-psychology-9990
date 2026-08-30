@@ -18,15 +18,17 @@ const marksList = [
 ].sort((a, b) => a - b);
 const papersList = [1, 2, 3, 4];
 
-// 数据中出现的、但不在已知分组里的知识点（防御性展示）
-const knownIds = new Set(Object.values(TOPICS_BY_PAPER).flatMap((gs) => gs.flatMap((g) => g.ids)));
-const extraTopics = [...new Set(questions.flatMap((q) => q.topics))].filter((t) => !knownIds.has(t));
-
 const qLabel = (q: (typeof questions)[number]) => `Q${q.q_no}${partLabel(q)}`;
-const searchBlob = (q: (typeof questions)[number]) =>
-  `${q.stem_text} ${q.text}`.toLowerCase();
-const showStem = (q: (typeof questions)[number]) =>
-  !!q.stem_text && !/^\d+$/.test(q.stem_text.trim());
+const searchBlob = (q: (typeof questions)[number]) => `${q.stem_text} ${q.text}`.toLowerCase();
+
+// 大题干呈现规则：
+//  - 有小题（part）的题目：stem_text 是共享背景（如 "From the study by Baron-Cohen et al. (eyes test):"），与小题正文不同 → 展示为美观的“背景”块。
+//  - 无小题的题目：stem_text 只是题面去掉开头题号的副本 → 不再单独展示，避免题目重复显示两遍。
+const hasRealStem = (q: (typeof questions)[number]) => {
+  if (!q.part) return false;
+  const s = (q.stem_text || '').trim();
+  return !!s && !/^\d+$/.test(s);
+};
 ---
 
 <!doctype html>
@@ -34,24 +36,17 @@ const showStem = (q: (typeof questions)[number]) =>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>CIE A-Level 心理学 9990 题库 · Paper 1</title>
+    <title>CIE A-Level Psychology 9990</title>
     <meta
       name="description"
-      content="CIE A-Level 心理学 9990（2024–2026 考纲 Paper 1）公益题库：按 12 篇核心实验与研究切面筛选历年真题。"
+      content="CIE A-Level Psychology 9990 question bank — past paper questions filtered by the 12 core studies (2024–2026 syllabus, Paper 1)."
     />
   </head>
   <body class="bg-gray-50 text-gray-800">
     <!-- 顶部 -->
     <header class="bg-indigo-700 text-white">
       <div class="max-w-6xl mx-auto px-4 py-6">
-        <h1 class="text-2xl font-bold">CIE A-Level 心理学 9990 · 题库</h1>
-        <p class="mt-1 text-indigo-100 text-sm">
-          慈善 / 非营利 · 免费开放 · 仅收录 <strong>2024–2026 考纲 Paper 1</strong>
-          （Approaches / Issues &amp; Debates）· 共 {questions.length} 道真题
-        </p>
-        <p class="mt-1 text-indigo-200 text-xs">
-          界面中文 · 题目英文 · 知识点（12 篇实验）与下拉选项英文 · 不展示 mark scheme
-        </p>
+        <h1 class="text-2xl font-bold">CIE A-Level Psychology 9990</h1>
       </div>
     </header>
 
@@ -60,52 +55,25 @@ const showStem = (q: (typeof questions)[number]) =>
       <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap gap-3 items-end">
         <!-- 宏观：试卷（决定下方知识点等筛选项） -->
         <label class="flex flex-col text-xs font-medium text-gray-600">
-          试卷
+          Paper
           <select id="f-paper" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800">
-            <option value="">全部试卷</option>
+            <option value="">All papers</option>
             {papersList.map((p) => <option value={p}>{PAPER_LABELS[p] ?? `Paper ${p}`}</option>)}
           </select>
         </label>
 
-        <!-- 知识点（12 篇实验，可多选） -->
-        <div class="flex flex-col text-xs font-medium text-gray-600 grow min-w-[16rem]">
-          知识点（可多选）
-          <div id="topic-chips" class="mt-1 flex flex-wrap gap-1.5">
-            {TOPICS_BY_PAPER[1].map((g) => (
-              <div class="contents">
-                <span class="w-full text-[10px] text-gray-400 uppercase tracking-wide">{g.label}</span>
-                {g.ids.map((id) => (
-                  <button
-                    type="button"
-                    class="topic-chip border border-gray-300 rounded-full px-2.5 py-1 text-xs text-gray-700 hover:bg-indigo-50 hover:border-indigo-300"
-                    data-topic={id}
-                  >
-                    {TOPIC_LABELS[id] ?? id}
-                  </button>
-                ))}
-              </div>
-            ))}
-            {extraTopics.length > 0 && (
-              <div class="contents">
-                <span class="w-full text-[10px] text-gray-400 uppercase tracking-wide">其他</span>
-                {extraTopics.map((id) => (
-                  <button
-                    type="button"
-                    class="topic-chip border border-gray-300 rounded-full px-2.5 py-1 text-xs text-gray-700 hover:bg-indigo-50 hover:border-indigo-300"
-                    data-topic={id}
-                  >
-                    {TOPIC_LABELS[id] ?? id}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+        <!-- 知识点（12 篇实验，单选下拉；卡片标签仍可为多实验） -->
+        <label class="flex flex-col text-xs font-medium text-gray-600">
+          Study
+          <select id="f-topic" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800 min-w-[14rem]">
+            <option value="">All studies</option>
+          </select>
+        </label>
 
         <label class="flex flex-col text-xs font-medium text-gray-600">
-          研究切面
+          Research facet
           <select id="f-type" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800 min-w-[10rem]">
-            <option value="">全部研究切面</option>
+            <option value="">All facets</option>
             {Object.entries(TYPE_LABELS).map(([id, label]) => (
               <option value={id}>{label}</option>
             ))}
@@ -113,43 +81,43 @@ const showStem = (q: (typeof questions)[number]) =>
         </label>
 
         <label class="flex flex-col text-xs font-medium text-gray-600">
-          年份
+          Year
           <select id="f-year" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800">
-            <option value="">全部年份</option>
+            <option value="">All years</option>
             {years.map((y) => <option value={y}>{y}</option>)}
           </select>
         </label>
 
         <label class="flex flex-col text-xs font-medium text-gray-600">
-          考季
+          Session
           <select id="f-session" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800">
-            <option value="">全部考季</option>
+            <option value="">All sessions</option>
             {sessions.map((s) => <option value={s}>{SESSION_LABELS[s] ?? s}</option>)}
           </select>
         </label>
 
         <label class="flex flex-col text-xs font-medium text-gray-600">
-          命令词
+          Command word
           <select id="f-cmd" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800">
-            <option value="">全部命令词</option>
+            <option value="">All command words</option>
             {cmds.map((c) => <option value={c}>{CMD_LABELS[c] ?? c}</option>)}
           </select>
         </label>
 
         <label class="flex flex-col text-xs font-medium text-gray-600">
-          分值
+          Marks
           <select id="f-marks" class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800">
-            <option value="">全部分值</option>
+            <option value="">All marks</option>
             {marksList.map((m) => <option value={m}>[{m}]</option>)}
           </select>
         </label>
 
         <label class="flex flex-col text-xs font-medium text-gray-600 grow min-w-[12rem]">
-          搜索（题面关键词）
+          Search
           <input
             id="f-search"
             type="search"
-            placeholder="如：sample, aim, Baron-Cohen…"
+            placeholder="e.g. sample, aim, Baron-Cohen…"
             class="mt-1 border rounded px-2 py-1.5 text-sm text-gray-800 w-full"
           />
         </label>
@@ -162,7 +130,7 @@ const showStem = (q: (typeof questions)[number]) =>
         </button>
 
         <div class="text-xs text-gray-500 self-center">
-          命中 <span id="result-count" class="font-semibold text-indigo-700">{questions.length}</span> 题
+          匹配到 <span id="result-count" class="font-semibold text-indigo-700">{questions.length}</span> 题
         </div>
       </div>
     </div>
@@ -190,8 +158,11 @@ const showStem = (q: (typeof questions)[number]) =>
               {q.has_figure && <span class="badge bg-rose-50 text-rose-700">含图</span>}
             </div>
 
-            {showStem(q) && (
-              <p class="text-xs text-gray-500 border-l-2 border-indigo-200 pl-2 italic">{q.stem_text}</p>
+            {hasRealStem(q) && (
+              <div class="stem-box">
+                <span class="stem-cap">Context</span>
+                {q.stem_text}
+              </div>
             )}
 
             <p class="qtext text-sm text-gray-900">{q.text}</p>
@@ -215,13 +186,15 @@ const showStem = (q: (typeof questions)[number]) =>
     </main>
 
     <footer class="max-w-6xl mx-auto px-4 py-8 text-center text-xs text-gray-400">
-      数据来源于历年真题 PDF，按 2024–2026 考纲整理 · 慈善 / 教育用途，免费开放
+      题目整理自历年真题 PDF · 按 2024–2026 考纲 ·
+      <a href="admin" class="underline hover:text-indigo-600">题库校对后台</a>
     </footer>
 
     <script define:vars={{ TOPICS_BY_PAPER, TOPIC_LABELS }}>
       const $ = (id) => document.getElementById(id);
       const sel = {
         paper: $('f-paper'),
+        topic: $('f-topic'),
         type: $('f-type'),
         year: $('f-year'),
         session: $('f-session'),
@@ -229,78 +202,54 @@ const showStem = (q: (typeof questions)[number]) =>
         marks: $('f-marks'),
         search: $('f-search'),
       };
-      const chipsBox = $('topic-chips');
+      const topicSel = sel.topic;
       const cards = Array.from(document.querySelectorAll('#qlist .card'));
       const countEl = $('result-count');
       const emptyHint = $('empty-hint');
 
-      let selectedTopics = new Set();
-
-      // 防御性：扫描所有卡片中出现、但不在 TOPICS_BY_PAPER 已知分组里的知识点
+      // 知识点（实验）分组在卡片数据中出现、但不在已知分组里的，作为“其他”兜底
       const knownTopics = new Set(
         Object.values(TOPICS_BY_PAPER).flatMap((gs) => gs.flatMap((g) => g.ids))
       );
-      let extraTopicsGlobal = [
-        ...new Set(
-          cards.flatMap((c) => (c.dataset.topics || '').split(' ').filter(Boolean))
-        ),
+      const extraTopics = [
+        ...new Set(cards.flatMap((c) => (c.dataset.topics || '').split(' ').filter(Boolean))),
       ].filter((t) => !knownTopics.has(t));
 
-      function rebuildChips(paper) {
+      // 宏观 Paper 切换：重建“Study”下拉（单选）
+      function rebuildTopic(paper) {
         const groups = TOPICS_BY_PAPER[paper] || [];
-        chipsBox.innerHTML = '';
-        selectedTopics = new Set();
+        topicSel.innerHTML = '';
+        const all = document.createElement('option');
+        all.value = '';
+        all.textContent = 'All studies';
+        topicSel.appendChild(all);
         for (const g of groups) {
-          const lbl = document.createElement('span');
-          lbl.className = 'w-full text-[10px] text-gray-400 uppercase tracking-wide';
-          lbl.textContent = g.label;
-          chipsBox.appendChild(lbl);
+          const og = document.createElement('optgroup');
+          og.label = g.label;
           for (const id of g.ids) {
-            const b = document.createElement('button');
-            b.type = 'button';
-            b.className = 'topic-chip border border-gray-300 rounded-full px-2.5 py-1 text-xs text-gray-700 hover:bg-indigo-50 hover:border-indigo-300';
-            b.dataset.topic = id;
-            b.textContent = TOPIC_LABELS[id] ?? id;
-            b.addEventListener('click', () => toggleChip(b));
-            chipsBox.appendChild(b);
+            const o = document.createElement('option');
+            o.value = id;
+            o.textContent = TOPIC_LABELS[id] ?? id;
+            og.appendChild(o);
           }
+          topicSel.appendChild(og);
         }
-        if (extraTopicsGlobal.length) {
-          const lbl = document.createElement('span');
-          lbl.className = 'w-full text-[10px] text-gray-400 uppercase tracking-wide';
-          lbl.textContent = '其他';
-          chipsBox.appendChild(lbl);
-          for (const id of extraTopicsGlobal) {
-            const b = document.createElement('button');
-            b.type = 'button';
-            b.className = 'topic-chip border border-gray-300 rounded-full px-2.5 py-1 text-xs text-gray-700 hover:bg-indigo-50 hover:border-indigo-300';
-            b.dataset.topic = id;
-            b.textContent = TOPIC_LABELS[id] ?? id;
-            b.addEventListener('click', () => toggleChip(b));
-            chipsBox.appendChild(b);
+        if (extraTopics.length) {
+          const og = document.createElement('optgroup');
+          og.label = 'Other';
+          for (const id of extraTopics) {
+            const o = document.createElement('option');
+            o.value = id;
+            o.textContent = TOPIC_LABELS[id] ?? id;
+            og.appendChild(o);
           }
+          topicSel.appendChild(og);
         }
       }
-
-      function toggleChip(btn) {
-        const id = btn.dataset.topic;
-        if (selectedTopics.has(id)) {
-          selectedTopics.delete(id);
-          btn.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-600');
-        } else {
-          selectedTopics.add(id);
-          btn.classList.add('bg-indigo-600', 'text-white', 'border-indigo-600');
-        }
-        apply();
-      }
-
-      // 初始芯片点击事件（服务端渲染的 P1 芯片）
-      chipsBox.querySelectorAll('.topic-chip').forEach((b) =>
-        b.addEventListener('click', () => toggleChip(b))
-      );
 
       function apply() {
         const paper = sel.paper.value;
+        const topic = sel.topic.value;
         const type = sel.type.value;
         const year = sel.year.value;
         const session = sel.session.value;
@@ -313,7 +262,7 @@ const showStem = (q: (typeof questions)[number]) =>
           const topics = (c.dataset.topics || '').split(' ').filter(Boolean);
           const cmds = (c.dataset.cmd || '').split(' ').filter(Boolean);
           const okPaper = !paper || c.dataset.paper === paper;
-          const okTopic = selectedTopics.size === 0 || topics.some((t) => selectedTopics.has(t));
+          const okTopic = !topic || topics.includes(topic);
           const okType = !type || (c.dataset.type || '') === type;
           const okYear = !year || c.dataset.year === year;
           const okSession = !session || c.dataset.session === session;
@@ -328,18 +277,18 @@ const showStem = (q: (typeof questions)[number]) =>
         emptyHint.classList.toggle('hidden', n !== 0);
       }
 
-      // 宏观试卷切换：重建知识点下拉内容（需求 4）
       sel.paper.addEventListener('change', () => {
-        rebuildChips(Number(sel.paper.value) || 1);
+        rebuildTopic(Number(sel.paper.value) || 1);
         apply();
       });
 
       Object.values(sel).forEach((el) => el && el.addEventListener('input', apply));
       $('btn-reset')?.addEventListener('click', () => {
         Object.values(sel).forEach((el) => el && (el.value = ''));
-        rebuildChips(1);
+        rebuildTopic(1);
         apply();
       });
+      rebuildTopic(1);
       apply();
     </script>
   </body>
